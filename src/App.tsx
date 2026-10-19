@@ -32,6 +32,9 @@ import Rimborsi from './pages/Rimborsi'
 import Profilo from './pages/Profilo'
 import Impostazioni from './pages/admin/Impostazioni'
 import Utenti from './pages/admin/Utenti'
+import Fatture from './pages/fatture/Fatture'
+import FatturaDettaglio from './pages/fatture/FatturaDettaglio'
+import ModuloFattura from './pages/fatture/ModuloFattura'
 
 function Protetta({ children }: { children: ReactNode }) {
   const { session, profilo, caricamento, recuperoPassword, esci } = useAuth()
@@ -131,6 +134,10 @@ export default function App() {
 
             <Route path="admin/utenti" element={<SoloAdmin><Utenti /></SoloAdmin>} />
             <Route path="admin/impostazioni" element={<SoloAdmin><Impostazioni /></SoloAdmin>} />
+            <Route path="fatture" element={<SoloAdmin><Fatture /></SoloAdmin>} />
+            <Route path="fatture/nuova" element={<SoloAdmin><ModuloFattura /></SoloAdmin>} />
+            <Route path="fatture/:id" element={<SoloAdmin><FatturaDettaglio /></SoloAdmin>} />
+            <Route path="fatture/:id/modifica" element={<SoloAdmin><ModuloFattura /></SoloAdmin>} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { ETICHETTA_PIPELINE, ETICHETTA_PREVENTIVO, type StatoPipeline, type StatoPreventivo } from '../lib/types'
+import { ETICHETTA_FATTURA, ETICHETTA_PIPELINE, ETICHETTA_PREVENTIVO, type StatoFattura, type StatoPipeline, type StatoPreventivo } from '../lib/types'
 
 /** Sotto-navigazione dell'area commerciale */
 export function SchedeCommerciale() {
@@ -48,4 +48,16 @@ export function tassoConversione(stati: StatoPreventivo[]) {
   const accettati = stati.filter((s) => s === 'accettato').length
   const chiusi = stati.filter((s) => s === 'accettato' || s === 'rifiutato' || s === 'perso').length
   return chiusi ? Math.round((accettati / chiusi) * 100) : null
+}
+
+const coloriFattura: Record<StatoFattura, string> = {
+  da_incassare: 'bg-brand-100 text-brand-700',
+  parziale: 'bg-amber-100 text-amber-800',
+  scaduta: 'bg-red-100 text-red-800',
+  pagata: 'bg-emerald-100 text-emerald-800',
+  annullata: 'bg-slate-100 text-slate-500 line-through',
+}
+
+export function BadgeFattura({ stato }: { stato: StatoFattura }) {
+  return <span className={`rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${coloriFattura[stato]}`}>{ETICHETTA_FATTURA[stato]}</span>
 }

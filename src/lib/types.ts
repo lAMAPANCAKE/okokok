@@ -379,3 +379,52 @@ export const ETICHETTA_RUOLO: Record<Ruolo, string> = {
   responsabile: 'Responsabile',
   admin: 'Admin',
 }
+
+export type StatoFattura = 'da_incassare' | 'parziale' | 'scaduta' | 'pagata' | 'annullata'
+export const ETICHETTA_FATTURA: Record<StatoFattura, string> = {
+  da_incassare: 'Da incassare',
+  parziale: 'Incassata in parte',
+  scaduta: 'Scaduta',
+  pagata: 'Pagata',
+  annullata: 'Annullata',
+}
+
+export const ETICHETTA_METODO: Record<MetodoPagamento, string> = {
+  bonifico: 'Bonifico',
+  contanti: 'Contanti',
+  altro: 'Altro',
+}
+
+/** Riga della vista fatture_stato: la fattura con incassato, residuo e stato calcolati */
+export interface Fattura {
+  id: string
+  anno: number
+  numero: string
+  azienda_id: string
+  preventivo_id: string | null
+  evento_id: string | null
+  data_emissione: string
+  data_scadenza: string
+  descrizione: string
+  imponibile: number
+  iva_pct: number
+  iva: number
+  totale: number
+  annullata: boolean
+  note: string | null
+  created_at: string
+  incassato: number
+  residuo: number
+  ultimo_incasso: string | null
+  stato: StatoFattura
+}
+
+export interface Incasso {
+  id: string
+  fattura_id: string
+  data: string
+  importo: number
+  metodo: MetodoPagamento
+  note: string | null
+  created_at: string
+}

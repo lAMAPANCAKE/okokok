@@ -24,6 +24,7 @@ export default function Menu() {
         { to: '/rimborsi', etichetta: 'Trasferte e rimborsi', descrizione: 'Approvazioni e pagamenti delle spese' },
         ...(isAdmin
           ? [
+              { to: '/fatture', etichetta: 'Fatture e incassi', descrizione: 'Fatture emesse, scadenze e pagamenti ricevuti' },
               { to: '/documenti', etichetta: 'Documenti', descrizione: 'Verifica, scadenze e mancanti' },
               { to: '/admin/utenti', etichetta: 'Utenti', descrizione: 'Inviti, ruoli e tariffe' },
               { to: '/admin/impostazioni', etichetta: 'Impostazioni', descrizione: 'Maggiorazioni, dati aziendali, registro modifiche' },

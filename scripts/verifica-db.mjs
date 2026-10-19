@@ -297,6 +297,34 @@ rep.r === 630 && rep.cp === 400 && rep.cpe === 74.4 && rep.cr === 10 && rep.n ==
   ? pass('report evento: ricavo 630, costo personale 74,40 + rimborsi 10 (preventivato 400)') : fail('report ' + JSON.stringify(rep))
 ;(await come(C1, `select count(*)::int n from report_eventi where ricavo > 0`)).rows[0].n === 0 ? pass('il collaboratore non vede ricavi e margini') : fail('ricavi visibili al collaboratore')
 
+// ============================ Fatture e incassi ============================
+console.log('\nFatture e incassi:')
+await deveFallire(R, `insert into fatture (numero, azienda_id, descrizione, imponibile) values ('1', '${az.id}', 'Gala', 630)`, 'il responsabile emette una fattura')
+const fa = (await come(A, `insert into fatture (numero, azienda_id, preventivo_id, evento_id, descrizione, imponibile, iva_pct) values ('1', '${az.id}', '${p1.id}', '${ev}', 'Gala', 630, 22) returning id, iva::float iva, totale::float t`)).rows[0]
+fa.iva === 138.6 && fa.t === 768.6 ? pass('fattura 630 + IVA 22% = 768,60') : fail('totali fattura ' + JSON.stringify(fa))
+await deveFallire(A, `insert into fatture (numero, azienda_id, descrizione, imponibile) values ('1', '${az.id}', 'Doppia', 10)`, 'stesso numero di fattura nello stesso anno')
+await deveFallire(A, `insert into fatture (numero, azienda_id, descrizione, imponibile, data_emissione, data_scadenza) values ('9', '${az.id}', 'X', 10, current_date, current_date - 1)`, 'scadenza prima dell’emissione')
+;(await come(R, `select count(*)::int n from fatture_stato`)).rows[0].n === 0 ? pass('fatture invisibili al responsabile') : fail('responsabile vede fatture')
+;(await come(C1, `select count(*)::int n from fatture_stato`)).rows[0].n === 0 ? pass('fatture invisibili al collaboratore') : fail('collaboratore vede fatture')
+const statoF = async () => (await come(A, `select stato, incassato::float i, residuo::float r from fatture_stato where id = '${fa.id}'`)).rows[0]
+;(await statoF()).stato === 'da_incassare' ? pass('nuova fattura “da incassare”') : fail('stato iniziale fattura')
+await come(A, `insert into incassi (fattura_id, importo) values ('${fa.id}', 300)`)
+const s1 = await statoF()
+s1.stato === 'parziale' && s1.r === 468.6 ? pass('incasso parziale: restano 468,60') : fail('parziale ' + JSON.stringify(s1))
+await deveFallire(A, `insert into incassi (fattura_id, importo) values ('${fa.id}', 500)`, 'incasso oltre il totale')
+await deveFallire(R, `insert into incassi (fattura_id, importo) values ('${fa.id}', 10)`, 'il responsabile registra un incasso')
+await deveFallire(A, `update fatture set annullata = true where id = '${fa.id}'`, 'annullare una fattura con incassi')
+await deveFallire(A, `update fatture set imponibile = 100 where id = '${fa.id}'`, 'totale sotto quanto già incassato')
+await deveFallire(A, `delete from fatture where id = '${fa.id}'`, 'eliminare una fattura con incassi')
+await come(A, `insert into incassi (fattura_id, importo, metodo) values ('${fa.id}', 468.6, 'contanti')`)
+;(await statoF()).stato === 'pagata' ? pass('saldata con il secondo incasso → pagata') : fail('stato dopo saldo')
+const fs = (await come(A, `insert into fatture (numero, azienda_id, descrizione, imponibile, data_emissione, data_scadenza) values ('2', '${az.id}', 'Vecchia', 100, current_date - 60, current_date - 30) returning id`)).rows[0].id
+;(await come(A, `select stato from fatture_stato where id = '${fs}'`)).rows[0].stato === 'scaduta' ? pass('non pagata oltre la scadenza → scaduta') : fail('scaduta')
+await come(A, `update fatture set annullata = true where id = '${fs}'`)
+;(await come(A, `select stato from fatture_stato where id = '${fs}'`)).rows[0].stato === 'annullata' ? pass('fattura senza incassi annullata') : fail('annullamento')
+await deveFallire(A, `insert into incassi (fattura_id, importo) values ('${fs}', 10)`, 'incasso su fattura annullata')
+;(await come(A, `select count(*)::int n from audit_log where tabella in ('fatture', 'incassi')`)).rows[0].n >= 5 ? pass('fatture e incassi nel registro modifiche') : fail('audit fatture')
+
 console.log('\nScript DEMO commerciale:')
 try {
   const seed = readFileSync(join(dir, '..', 'seed-demo-fase3.sql'), 'utf8')

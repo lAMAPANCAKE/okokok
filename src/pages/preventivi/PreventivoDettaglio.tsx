@@ -390,6 +390,7 @@ export default function PreventivoDettaglio() {
         )}
         {p.stato === 'accettato' && !p.evento_id && <Bottone className="min-h-10 text-sm" onClick={() => void creaEvento()}>Crea evento</Bottone>}
         {p.evento_id && <Link to={`/eventi/${p.evento_id}`} className="inline-flex min-h-10 items-center rounded-xl px-3 text-sm font-medium text-brand-700 ring-1 ring-brand-100">Vai all’evento →</Link>}
+        {p.stato === 'accettato' && isAdmin && <Link to={`/fatture/nuova?preventivo=${p.id}`} className="inline-flex min-h-10 items-center rounded-xl px-3 text-sm font-medium text-brand-700 ring-1 ring-brand-100">Registra fattura</Link>}
         {!bozza && <Bottone variante="fantasma" className="min-h-10 text-sm" onClick={() => confirm('Riportare in bozza? Andrà re-inviato al cliente dopo le modifiche.') && void cambiaStato('bozza')}>Riporta in bozza</Bottone>}
         <Bottone variante="fantasma" className="min-h-10 text-sm" onClick={() => void duplica()}>Duplica</Bottone>
         {(bozza || isAdmin) && <Bottone variante="fantasma" className="min-h-10 text-sm text-red-700" onClick={() => void elimina()}>Elimina</Bottone>}

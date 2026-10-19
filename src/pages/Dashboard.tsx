@@ -111,16 +111,19 @@ function DaFare({ isAdmin }: { isAdmin: boolean }) {
     let rimborsiQ = supabase.from('rimborsi').select('id', { count: 'exact', head: true }).eq('stato', 'richiesto')
     if (!isAdmin) rimborsiQ = rimborsiQ.neq('collaboratore_id', profilo!.id)
     const rimborsi = await conta(rimborsiQ)
-    if (!isAdmin) return { rimborsi, verifica: 0, scadenze: 0, daPagare: 0, daAttivare: 0 }
-    const [verifica, scadenze, saldi, daAttivare] = await Promise.all([
+    if (!isAdmin) return { rimborsi, verifica: 0, scadenze: 0, daPagare: 0, daAttivare: 0, fattureScadute: 0, importoScaduto: 0 }
+    const [verifica, scadenze, saldi, daAttivare, scadute] = await Promise.all([
       conta(supabase.from('documenti').select('id', { count: 'exact', head: true }).eq('stato_verifica', 'in_verifica')),
       conta(supabase.from('documenti_validita').select('id', { count: 'exact', head: true }).eq('piu_recente', true).neq('stato_verifica', 'rifiutato').in('validita', ['in_scadenza', 'scaduto'])),
       supabase.from('saldi').select('saldo').gt('saldo', 0),
       // Include chi si è registrato da solo e attende l'abilitazione
       conta(supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('attivo', false)),
+      supabase.from('fatture_stato').select('residuo').eq('stato', 'scaduta'),
     ])
     const daPagare = (oppureErrore(saldi) as { saldo: number }[]).reduce((s, r) => s + Number(r.saldo), 0)
-    return { rimborsi, verifica, scadenze, daPagare, daAttivare }
+    const righeScadute = oppureErrore(scadute) as { residuo: number }[]
+    const importoScaduto = righeScadute.reduce((s, r) => s + Number(r.residuo), 0)
+    return { rimborsi, verifica, scadenze, daPagare, daAttivare, fattureScadute: righeScadute.length, importoScaduto }
   }, [isAdmin, profilo?.id])
 
   if (!dati) return null
@@ -131,6 +134,12 @@ function DaFare({ isAdmin }: { isAdmin: boolean }) {
           { to: '/documenti', testo: 'Documenti da verificare', valore: String(dati.verifica), attivo: dati.verifica > 0 },
           { to: '/documenti', testo: 'Documenti in scadenza (30 gg)', valore: String(dati.scadenze), attivo: dati.scadenze > 0 },
           { to: '/compensi', testo: 'Saldi da pagare', valore: formatEuro(dati.daPagare), attivo: dati.daPagare > 0 },
+          {
+            to: '/fatture',
+            testo: dati.fattureScadute ? `Fatture scadute da incassare (${dati.fattureScadute})` : 'Fatture scadute da incassare',
+            valore: formatEuro(dati.importoScaduto),
+            attivo: dati.importoScaduto > 0,
+          },
           { to: '/admin/utenti', testo: 'Account da attivare', valore: String(dati.daAttivare), attivo: dati.daAttivare > 0 },
         ]
       : []),

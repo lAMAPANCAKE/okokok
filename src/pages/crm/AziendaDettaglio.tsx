@@ -1,14 +1,16 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { BadgePipeline, BadgePreventivo, tassoConversione } from '../../components/commerciale'
+import { usePermessi } from '../../auth/AuthProvider'
+import { BadgeFattura, BadgePipeline, BadgePreventivo, tassoConversione } from '../../components/commerciale'
 import { Avviso, Bottone, Caricamento, Input, Intestazione, Scheda, Vuoto } from '../../components/ui'
 import { formatData, formatEuro, isoGiorno, nomeCompleto, oggiIso } from '../../lib/format'
 import { messaggioErrore, supabase } from '../../lib/supabase'
-import { ETICHETTA_PIPELINE, type Azienda, type Evento, type FollowUp, type Preventivo, type Profilo, type Sopralluogo, type StatoPipeline, type TotaliPreventivo } from '../../lib/types'
+import { ETICHETTA_PIPELINE, type Azienda, type Evento, type Fattura, type FollowUp, type Preventivo, type Profilo, type Sopralluogo, type StatoPipeline, type TotaliPreventivo } from '../../lib/types'
 import { oppureErrore, useDati } from '../../lib/useDati'
 
 export default function AziendaDettaglio() {
   const { id } = useParams() as { id: string }
+  const { isAdmin } = usePermessi()
   const [errore, setErrore] = useState('')
 
   const { dati, errore: erroreCaricamento, caricamento, ricarica } = useDati(async () => {
@@ -113,6 +115,8 @@ export default function AziendaDettaglio() {
           </ul>
         )}
       </section>
+
+      {isAdmin && <FattureAzienda aziendaId={id} />}
 
       <section className="mb-6">
         <div className="mb-2 flex items-center justify-between">
@@ -238,6 +242,42 @@ function FollowUpAzienda({ aziendaId, followup, staff, onCambiato }: { aziendaId
           </div>
         )}
       </Scheda>
+    </section>
+  )
+}
+
+/** Fatture del cliente con quanto resta da incassare (solo admin) */
+function FattureAzienda({ aziendaId }: { aziendaId: string }) {
+  const { dati } = useDati(async () => {
+    return oppureErrore(await supabase.from('fatture_stato').select('*').eq('azienda_id', aziendaId).order('data_emissione', { ascending: false })) as Fattura[]
+  }, [aziendaId])
+  if (!dati) return null
+  const residuo = dati.filter((f) => f.stato !== 'annullata').reduce((s, f) => s + Number(f.residuo), 0)
+
+  return (
+    <section className="mb-6">
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Fatture</h2>
+        <Link to={`/fatture/nuova?azienda=${aziendaId}`} className="text-sm font-medium text-brand-700">+ Nuova</Link>
+      </div>
+      {dati.length > 0 && <p className="mb-2 text-sm text-slate-500">Da incassare {formatEuro(residuo)}</p>}
+      {dati.length === 0 ? (
+        <Vuoto titolo="Nessuna fattura" />
+      ) : (
+        <ul className="space-y-2">
+          {dati.map((f) => (
+            <li key={f.id}>
+              <Link to={`/fatture/${f.id}`} className="flex items-center justify-between gap-3 rounded-2xl bg-white p-4 ring-1 ring-slate-200 hover:ring-slate-300">
+                <div className="min-w-0">
+                  <p className="truncate font-medium">N. {f.numero}/{f.anno} · {f.descrizione}</p>
+                  <p className="text-sm text-slate-500">{formatData(f.data_emissione)} · {formatEuro(f.totale)}</p>
+                </div>
+                <BadgeFattura stato={f.stato} />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   )
 }

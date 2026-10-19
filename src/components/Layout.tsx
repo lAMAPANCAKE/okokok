@@ -3,7 +3,7 @@ import { useAuth, usePermessi } from '../auth/AuthProvider'
 import { nomeCompleto } from '../lib/format'
 import { Campanella } from './Notifiche'
 
-type Icona = 'home' | 'turni' | 'eventi' | 'clienti' | 'preventivi' | 'sopralluoghi' | 'compensi' | 'rimborsi' | 'documenti' | 'utenti' | 'profilo' | 'altro' | 'report'
+type Icona = 'home' | 'turni' | 'eventi' | 'clienti' | 'preventivi' | 'sopralluoghi' | 'compensi' | 'rimborsi' | 'documenti' | 'utenti' | 'profilo' | 'altro' | 'report' | 'fatture'
 
 const tracciati: Record<Icona, string> = {
   home: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
@@ -16,6 +16,7 @@ const tracciati: Record<Icona, string> = {
   preventivi: 'M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7zM14 3v4h4M9 12h6M9 16h4M14 16h1',
   sopralluoghi: 'M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
   rimborsi: 'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3',
+  fatture: 'M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7zM14 3v4h4M14 11.5a2.5 2.5 0 1 0 0 4M9.5 13h3M9.5 14.5h3',
   documenti: 'M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7zM14 3v4h4M9 13h6M9 17h6',
   utenti: 'M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM21 19v-1a4 4 0 0 0-3-3.87M16 4.13a3 3 0 0 1 0 5.74',
   profilo: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 9a7 7 0 0 1 14 0',
@@ -55,6 +56,7 @@ export function Layout() {
         { to: '/rimborsi', etichetta: 'Rimborsi', icona: 'rimborsi', mobile: false },
         ...(isAdmin
           ? [
+              { to: '/fatture', etichetta: 'Fatture e incassi', icona: 'fatture', mobile: false } satisfies Voce,
               { to: '/documenti', etichetta: 'Documenti', icona: 'documenti', mobile: false } satisfies Voce,
               { to: '/admin/utenti', etichetta: 'Utenti', icona: 'utenti', mobile: false } satisfies Voce,
             ]
