@@ -32,7 +32,7 @@ export default function Login() {
   }
 
   return (
-    <GuscioAuth titolo="Gestionale Eventi" sottotitolo="Accedi con le credenziali ricevute via invito">
+    <GuscioAuth titolo="Gestionale Eventi" sottotitolo="Accedi al tuo account">
       <form onSubmit={accedi} className="space-y-4">
         {errore && <Avviso>{errore}</Avviso>}
         <Campo etichetta="Email">
@@ -48,6 +48,12 @@ export default function Login() {
           Password dimenticata?
         </Link>
       </form>
+      <div className="mt-8 border-t border-slate-200 pt-6 text-center">
+        <p className="text-sm text-slate-500">Non hai un account?</p>
+        <Link to="/registrati" className="mt-3 flex min-h-12 w-full items-center justify-center rounded-xl bg-white px-4 text-base font-medium text-slate-900 ring-1 ring-slate-300 hover:bg-slate-50">
+          Crea account
+        </Link>
+      </div>
     </GuscioAuth>
   )
 }

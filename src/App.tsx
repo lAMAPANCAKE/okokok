@@ -7,6 +7,7 @@ import { configurato } from './lib/supabase'
 import Benvenuto from './pages/auth/Benvenuto'
 import Login, { GuscioAuth } from './pages/auth/Login'
 import RecuperaPassword from './pages/auth/RecuperaPassword'
+import Registrati from './pages/auth/Registrati'
 import ReimpostaPassword from './pages/auth/ReimpostaPassword'
 import Compensi from './pages/Compensi'
 import Dashboard from './pages/Dashboard'
@@ -43,7 +44,7 @@ function Protetta({ children }: { children: ReactNode }) {
     return (
       <GuscioAuth titolo="Account non attivo">
         <div className="space-y-4">
-          <Avviso tipo="info">Il tuo account non è abilitato. Contatta l’amministrazione.</Avviso>
+          <Avviso tipo="info">Il tuo account non è ancora attivo: l’amministrazione deve abilitarlo. Riprova più tardi o contattala.</Avviso>
           <Bottone variante="secondario" className="w-full" onClick={() => void esci()}>
             Esci
           </Bottone>
@@ -95,6 +96,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<SoloOspite><Login /></SoloOspite>} />
           <Route path="/recupera-password" element={<SoloOspite><RecuperaPassword /></SoloOspite>} />
+          <Route path="/registrati" element={<SoloOspite><Registrati /></SoloOspite>} />
           <Route path="/reimposta-password" element={<ReimpostaPassword />} />
           <Route path="/benvenuto" element={<Benvenuto />} />
 

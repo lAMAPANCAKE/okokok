@@ -16,6 +16,8 @@ export function messaggioErrore(e: unknown): string {
   if (/Invalid login credentials/i.test(msg)) return 'Email o password non corretti'
   if (/Email not confirmed/i.test(msg)) return 'Email non ancora confermata'
   if (/Password should be at least/i.test(msg)) return 'La password deve avere almeno 8 caratteri'
+  if (/Signups not allowed/i.test(msg)) return 'Le registrazioni sono chiuse: chiedi un invito all’amministrazione'
+  if (/User already registered/i.test(msg)) return 'Esiste già un account con questa email: accedi o recupera la password'
   if (/rate limit/i.test(msg)) return 'Troppi tentativi, riprova tra qualche minuto'
   if (/Failed to fetch|NetworkError/i.test(msg)) return 'Connessione assente, riprova'
   if (/row-level security|permission denied/i.test(msg)) return 'Non hai i permessi per questa operazione'
