@@ -10,8 +10,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(titolo, {
       body: dati.testo || '',
-      icon: '/icon.svg',
-      badge: '/icon.svg',
+      icon: 'icon.svg',
+      badge: 'icon.svg',
       tag: dati.id ? `notifica-${dati.id}` : undefined,
       data: { link: dati.link || '/notifiche' },
     }),
@@ -20,11 +20,13 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const destinazione = new URL(event.notification.data?.link || '/notifiche', self.location.origin).href
+  // I link salvati sono relativi all'app (es. /notifiche): li risolviamo sotto lo scope, che include il percorso base
+  const link = (event.notification.data?.link || '/notifiche').replace(/^\//, '')
+  const destinazione = new URL(link, self.registration.scope).href
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((finestre) => {
       for (const f of finestre) {
-        if (f.url.startsWith(self.location.origin) && 'focus' in f) {
+        if (f.url.startsWith(self.registration.scope) && 'focus' in f) {
           f.navigate(destinazione)
           return f.focus()
         }

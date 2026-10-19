@@ -7,7 +7,7 @@ export function GuscioAuth({ titolo, sottotitolo, children }: { titolo: string; 
   return (
     <div className="flex min-h-dvh flex-col justify-center px-5 py-10">
       <div className="mx-auto w-full max-w-sm">
-        <img src="/icon.svg" alt="" className="mb-6 h-12 w-12" />
+        <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" className="mb-6 h-12 w-12" />
         <h1 className="text-2xl font-semibold tracking-tight">{titolo}</h1>
         {sottotitolo && <p className="mt-1 text-slate-500">{sottotitolo}</p>}
         <div className="mt-6">{children}</div>

@@ -3,7 +3,11 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-export default defineConfig({
+// GitHub Pages pubblica l'app sotto /okokok/ (nome del repository): `vite build --mode pages`
+export default defineConfig(({ mode }) => {
+  const base = mode === 'pages' ? '/okokok/' : '/'
+  return {
+  base,
   plugins: [
     react(),
     tailwindcss(),
@@ -15,7 +19,8 @@ export default defineConfig({
         short_name: 'Gestionale',
         description: 'Gestione operativa interna: turni, ore e compensi',
         lang: 'it',
-        start_url: '/',
+        start_url: base,
+        scope: base,
         display: 'standalone',
         background_color: '#f8fafc',
         theme_color: '#0f172a',
@@ -30,4 +35,5 @@ export default defineConfig({
       },
     }),
   ],
+  }
 })

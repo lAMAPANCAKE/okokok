@@ -15,7 +15,7 @@ export default function RecuperaPassword() {
     setErrore('')
     setInvio(true)
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/reimposta-password`,
+      redirectTo: `${window.location.origin}${import.meta.env.BASE_URL}reimposta-password`,
     })
     setInvio(false)
     if (error) setErrore(messaggioErrore(error))

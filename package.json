@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:db": "node scripts/verifica-db.mjs"
+    "test:db": "node scripts/verifica-db.mjs",
+    "deploy:pages": "tsc -b && vite build --mode pages && node -e \"require('fs').copyFileSync('dist/index.html','dist/404.html')\" && gh-pages -d dist --nojekyll -m \"Pubblica su GitHub Pages\""
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
@@ -27,6 +28,7 @@
     "eslint": "^9.25.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
+    "gh-pages": "^6.1.1",
     "globals": "^16.0.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~5.8.3",

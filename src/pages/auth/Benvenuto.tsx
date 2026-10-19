@@ -33,7 +33,7 @@ export default function Benvenuto() {
 
   return (
     <div className="mx-auto max-w-xl px-5 py-8">
-      <img src="/icon.svg" alt="" className="mb-6 h-12 w-12" />
+      <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" className="mb-6 h-12 w-12" />
       <h1 className="text-2xl font-semibold tracking-tight">Benvenuto!</h1>
       <p className="mt-1 mb-6 text-slate-500">Scegli una password e completa il tuo profilo: servono per assegnarti i turni e pagarti.</p>
       <ModuloProfilo

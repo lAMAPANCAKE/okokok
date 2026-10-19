@@ -91,7 +91,7 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Routes>
           <Route path="/login" element={<SoloOspite><Login /></SoloOspite>} />
           <Route path="/recupera-password" element={<SoloOspite><RecuperaPassword /></SoloOspite>} />
