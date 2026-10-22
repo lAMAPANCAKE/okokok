@@ -3,7 +3,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
-import { segmentiPareti, voceCatalogo, type Allestimento, type Oggetto, type Pavimento, type Punto, type TipoArredo } from './allestimento'
+import { estensione, segmentiPareti, voceCatalogo, type Allestimento, type Oggetto, type Pavimento, type Punto, type TipoArredo } from './allestimento'
 
 export type Vista = '3d' | 'pianta'
 export type Modo = 'sposta' | 'pareti' | 'calibra'
@@ -22,6 +22,7 @@ const PASSO_GRIGLIA = 0.25
 // Materiali condivisi
 // ---------------------------------------------------------------------------
 type Materiale = 'tovaglia' | 'oro' | 'cuscino' | 'legno' | 'legnoScuro' | 'nero' | 'metallo' | 'piatto' | 'foglie' | 'vaso' | 'fiori' | 'intonaco' | 'torta' | 'tessuto' | 'pista' | 'palco'
+  | 'prato' | 'ghiaia' | 'telo' | 'vetro' | 'candela' | 'corteccia' | 'siepe' | 'fioriBianchi'
 
 const mat = (colore: string, roughness = 0.8, metalness = 0, extra: THREE.MeshStandardMaterialParameters = {}) =>
   new THREE.MeshStandardMaterial({ color: colore, roughness, metalness, ...extra })
@@ -127,6 +128,12 @@ const DISEGNI_PAVIMENTO: Record<Pavimento, (c: CanvasRenderingContext2D, d: numb
   },
 }
 
+const disegnaGhiaia = (c: CanvasRenderingContext2D, d: number) => {
+  c.fillStyle = '#cfc6b4'
+  c.fillRect(0, 0, d, d)
+  rumore(c, d, 14000, ['#b8ae9a', '#e2dbcc', '#a39883', '#d8cfbd'], 4)
+}
+
 // ---------------------------------------------------------------------------
 // Geometrie degli arredi (unite per materiale e messe in cache)
 // ---------------------------------------------------------------------------
@@ -207,12 +214,13 @@ function coperti(posti: { x: number; z: number; ux: number; uz: number }[], alte
   return pezzi
 }
 
-function sedieAttorno(posti: { x: number; z: number }[]): Parte[] {
+/** Sedie rivolte verso il tavolo; (ux, uz) è la direzione dal tavolo alla sedia (di default dal centro). */
+function sedieAttorno(posti: { x: number; z: number; ux?: number; uz?: number }[]): Parte[] {
   if (!posti.length) return []
   const [telaio, cuscino] = partiSedia()
   const t: THREE.BufferGeometry[] = [], c: THREE.BufferGeometry[] = []
   for (const p of posti) {
-    const m = new THREE.Matrix4().makeRotationY(Math.atan2(p.x, p.z)).setPosition(p.x, 0, p.z)
+    const m = new THREE.Matrix4().makeRotationY(Math.atan2(p.ux ?? p.x, p.uz ?? p.z)).setPosition(p.x, 0, p.z)
     t.push(telaio[0].clone().applyMatrix4(m))
     c.push(cuscino[0].clone().applyMatrix4(m))
   }
@@ -264,7 +272,7 @@ function costruisciParti(o: Oggetto, altezzaPareti: number): Parte[] {
         [scatola(l + 0.06, 0.76, p + 0.06, 0, 0.38, 0), 'tovaglia'],
         ...(bordo.length ? [[unisci(coperti(bordo, 0.765)), 'piatto'] as Parte] : []),
         ...fiori,
-        ...sedieAttorno(posti),
+        ...sedieAttorno(posti.map((sd, k) => ({ ...sd, ux: bordo[k].ux, uz: bordo[k].uz }))),
       ]
     }
     case 'cocktail': {
@@ -335,7 +343,134 @@ function costruisciParti(o: Oggetto, altezzaPareti: number): Parte[] {
       ]
     case 'colonna':
       return [[scatola(0.4, altezzaPareti, 0.4, 0, altezzaPareti / 2, 0), 'intonaco']]
+    case 'sposi': {
+      // Sposi seduti sul lato −Z, rivolti verso gli invitati (+Z)
+      const p = 0.8
+      const posti = Array.from({ length: sedie }, (_, i) => ({ x: -lunghezza / 2 + ((i + 0.5) * lunghezza) / sedie, z: -p / 2 - 0.3 }))
+      const ghirlanda: [number, number, number][] = []
+      for (let x = -lunghezza / 2 + 0.1; x <= lunghezza / 2 - 0.1; x += 0.22) ghirlanda.push([x, 0.62 + Math.sin(x * 3) * 0.08, p / 2 + 0.06])
+      return [
+        [scatola(lunghezza + 0.06, 0.76, p + 0.06, 0, 0.38, 0), 'tovaglia'],
+        ...(posti.length ? [[unisci(coperti(posti.map((s) => ({ x: s.x, z: -p / 2 + 0.2, ux: 0, uz: -1 })), 0.765)), 'piatto'] as Parte] : []),
+        ...fioriSu(ghirlanda, 0.09),
+        ...centrotavola(0, 0.1),
+        ...sedieAttorno(posti.map((sd) => ({ ...sd, ux: 0, uz: -1 }))),
+      ]
+    }
+    case 'fila':
+      return sedieInFila(sedie)
+    case 'arco': {
+      const fiori: [number, number, number][] = []
+      for (const a of [0.15, 0.35, 0.55, 0.8, 2.3, 2.55, 2.8, 3.0]) fiori.push([Math.cos(a) * 1.2, 2.4 + Math.sin(a) * 1.2, 0])
+      for (const sx of [-1.2, 1.2]) for (const y of [0.15, 0.4, 0.7]) fiori.push([sx, y, 0.08])
+      return [
+        [unisci([cilindro(0.05, 0.05, 2.4, -1.2, 1.2, 0, 10), cilindro(0.05, 0.05, 2.4, 1.2, 1.2, 0, 10), pezzo(new THREE.TorusGeometry(1.2, 0.05, 8, 40, Math.PI), 0, 2.4, 0)]), 'piatto'],
+        ...fioriSu(fiori, 0.16),
+      ]
+    }
+    case 'tappeto': {
+      const petali: [number, number, number][] = []
+      for (let x = -lunghezza / 2 + 0.3; x < lunghezza / 2; x += 0.9) petali.push([x, 0.06, -0.68], [x + 0.45, 0.06, 0.68])
+      return [[uvInMetri(scatola(lunghezza, 0.02, 1.2, 0, 0.025, 0), 1, 1), 'tovaglia'], ...fioriSu(petali, 0.06).slice(0, -1)]
+    }
+    case 'lanterna':
+      return [
+        [scatola(0.24, 0.36, 0.24, 0, 0.2, 0), 'vetro'],
+        [unisci([scatola(0.28, 0.03, 0.28, 0, 0.015, 0), pezzo(new THREE.ConeGeometry(0.2, 0.14, 4), 0, 0.45, 0, Math.PI / 4), pezzo(new THREE.TorusGeometry(0.05, 0.01, 6, 12), 0, 0.56, 0)]), 'nero'],
+        [cilindro(0.04, 0.04, 0.12, 0, 0.09, 0, 12), 'candela'],
+      ]
+    case 'tableau':
+      return [
+        [unisci([pezzo(new THREE.CylinderGeometry(0.02, 0.02, 1.9, 6), -0.35, 0.93, 0.1, 0, -0.12, 0), pezzo(new THREE.CylinderGeometry(0.02, 0.02, 1.9, 6), 0.35, 0.93, 0.1, 0, -0.12, 0), pezzo(new THREE.CylinderGeometry(0.02, 0.02, 1.9, 6), 0, 0.93, -0.25, 0, 0.25, 0)]), 'legno'],
+        [pezzo(new THREE.BoxGeometry(1, 1.4, 0.04), 0, 1.25, 0.03, 0, -0.12, 0), 'piatto'],
+        [pezzo(new THREE.BoxGeometry(1.06, 0.06, 0.05), 0, 1.93, -0.06, 0, -0.12, 0), 'oro'],
+        ...fioriSu([[-0.45, 1.95, 0], [0.45, 1.95, 0], [0, 0.6, 0.15]], 0.1),
+      ]
+    case 'confettata': {
+      const vasi: THREE.BufferGeometry[] = []
+      for (let i = 0; i < 7; i++) vasi.push(cilindro(0.06, 0.06, 0.18 + (i % 3) * 0.06, Math.cos(i) * 0.38, 0.86 + (i % 3) * 0.03, Math.sin(i) * 0.38, 12))
+      return [
+        [cilindro(0.6, 0.66, 0.76, 0, 0.38, 0, 40), 'tovaglia'],
+        [unisci(vasi), 'vetro'],
+        [unisci(Array.from({ length: 7 }, (_, i) => cilindro(0.05, 0.05, 0.1, Math.cos(i) * 0.38, 0.82, Math.sin(i) * 0.38, 10))), 'fioriBianchi'],
+        ...centrotavola(),
+      ]
+    }
+    case 'photobooth': {
+      const fiori: [number, number, number][] = []
+      for (let i = 0; i < 36; i++) fiori.push([-1.05 + (i % 6) * 0.42 + ((i / 6) % 2 ? 0.2 : 0), 0.35 + Math.floor(i / 6) * 0.38, 0.1])
+      return [
+        [scatola(2.4, 2.4, 0.1, 0, 1.3, 0), 'siepe'],
+        [scatola(2.6, 0.1, 0.6, 0, 0.05, 0.1), 'legno'],
+        ...fioriSu(fiori, 0.1),
+      ]
+    }
+    case 'porta':
+      return [
+        [unisci([scatola(0.12, 2.9, 0.26, -1.16, 1.45, 0), scatola(0.12, 2.9, 0.26, 1.16, 1.45, 0), scatola(2.44, 0.14, 0.26, 0, 2.93, 0), scatola(0.06, 2.8, 0.06, 0, 1.4, 0), scatola(2.2, 0.06, 0.06, 0, 2.1, 0)]), 'legnoScuro'],
+        [scatola(2.2, 2.8, 0.03, 0, 1.4, 0), 'vetro'],
+      ]
+    case 'gazebo': {
+      const m = lunghezza / 2
+      const pali = [[-m, -m], [m, -m], [m, m], [-m, m]].map(([x, z]) => cilindro(0.06, 0.06, 2.6, x, 1.3, z, 10))
+      return [
+        [unisci(pali), 'piatto'],
+        [unisci([
+          pezzo(new THREE.ConeGeometry(m * Math.SQRT2 * 1.02, 1.5, 4, 1, true), 0, 3.35, 0, Math.PI / 4),
+          scatola(lunghezza, 0.3, 0.02, 0, 2.45, -m), scatola(lunghezza, 0.3, 0.02, 0, 2.45, m),
+          scatola(0.02, 0.3, lunghezza, -m, 2.45, 0), scatola(0.02, 0.3, lunghezza, m, 2.45, 0),
+        ]), 'telo'],
+      ]
+    }
+    case 'albero':
+      return [
+        [cilindro(0.14, 0.22, 2.4, 0, 1.2, 0, 10), 'corteccia'],
+        [unisci([pezzo(new THREE.IcosahedronGeometry(1.6, 1), 0, 3.3, 0), pezzo(new THREE.IcosahedronGeometry(1.2, 1), 0.7, 4.1, 0.3), pezzo(new THREE.IcosahedronGeometry(1.1, 1), -0.7, 3.8, -0.4)]), 'foglie'],
+      ]
+    case 'siepe':
+      return [[uvInMetri(scatola(lunghezza, 1.2, 0.8, 0, 0.6, 0), lunghezza / 2, 0.6), 'siepe']]
+    case 'giardino': {
+      const p = Math.round(lunghezza * 0.7 * 10) / 10
+      return [[uvInMetri(scatola(lunghezza, 0.02, p, 0, 0.01, 0), lunghezza, p), 'prato']]
+    }
+    case 'vialetto':
+      return [[uvInMetri(scatola(lunghezza, 0.03, 2, 0, 0.015, 0), lunghezza, 2), 'ghiaia']]
   }
+}
+
+/** Scala le coordinate UV perché la texture (2 × 2 m) si ripeta in proporzione alle dimensioni reali. */
+function uvInMetri(g: THREE.BufferGeometry, l: number, p: number) {
+  const uv = g.getAttribute('uv') as THREE.BufferAttribute
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * l, uv.getY(i) * p)
+  return g
+}
+
+/** Sedie in fila lungo X, rivolte verso −Z. */
+function sedieInFila(n: number, passo = 0.55): Parte[] {
+  const [telaio, cuscino] = partiSedia()
+  const t: THREE.BufferGeometry[] = [], c: THREE.BufferGeometry[] = []
+  for (let i = 0; i < n; i++) {
+    const x = (i - (n - 1) / 2) * passo
+    t.push(telaio[0].clone().translate(x, 0, 0))
+    c.push(cuscino[0].clone().translate(x, 0, 0))
+  }
+  telaio[0].dispose()
+  cuscino[0].dispose()
+  return n ? [[unisci(t), 'oro'], [unisci(c), 'cuscino']] : []
+}
+
+/** Ciuffi di fiori (rosa e bianchi) e verde attorno ai punti indicati. */
+function fioriSu(punti: [number, number, number][], r = 0.12): Parte[] {
+  const rosa: THREE.BufferGeometry[] = [], bianchi: THREE.BufferGeometry[] = [], verde: THREE.BufferGeometry[] = []
+  punti.forEach(([x, y, z], i) => {
+    ;(i % 3 === 0 ? bianchi : rosa).push(pezzo(new THREE.IcosahedronGeometry(r, 1), x, y, z))
+    verde.push(pezzo(new THREE.IcosahedronGeometry(r * 0.9, 0), x + r * 0.8, y - r * 0.3, z + (i % 2 ? r : -r) * 0.6))
+  })
+  return [
+    ...(rosa.length ? [[unisci(rosa), 'fiori'] as Parte] : []),
+    ...(bianchi.length ? [[unisci(bianchi), 'fioriBianchi'] as Parte] : []),
+    [unisci(verde), 'foglie'],
+  ]
 }
 
 const chiaveOggetto = (o: Oggetto, altezza: number) => `${o.tipo}|${o.sedie ?? ''}|${o.lunghezza ?? ''}|${o.tipo === 'colonna' ? altezza : ''}`
@@ -414,7 +549,7 @@ export class Scena3D {
     this.scena.add(new THREE.HemisphereLight('#ffffff', '#b8a68e', 1.4))
     this.sole.position.set(10, 22, 8)
     this.sole.castShadow = true
-    this.sole.shadow.mapSize.set(2048, 2048)
+    this.sole.shadow.mapSize.set(4096, 4096)
     this.sole.shadow.bias = -0.0004
     this.sole.shadow.normalBias = 0.03
     this.scena.add(this.sole, this.sole.target)
@@ -452,8 +587,17 @@ export class Scena3D {
         }),
       }),
       palco: mat('#2b2f36', 0.5),
+      prato: new THREE.MeshStandardMaterial({ roughness: 1, map: textureCanvas(256, DISEGNI_PAVIMENTO.prato) }),
+      ghiaia: new THREE.MeshStandardMaterial({ roughness: 1, map: textureCanvas(256, disegnaGhiaia) }),
+      telo: mat('#fbfaf7', 0.9, 0, { side: THREE.DoubleSide, transparent: true, opacity: 0.88 }),
+      vetro: mat('#b9d7e8', 0.1, 0.1, { transparent: true, opacity: 0.4 }),
+      candela: mat('#fff2d0', 0.6, 0, { emissive: '#ffb347', emissiveIntensity: 1.6 }),
+      corteccia: mat('#6b4a32', 0.9),
+      siepe: mat('#2f5e2c', 1, 0, { map: textureCanvas(128, (c, d) => { c.fillStyle = '#2f5e2c'; c.fillRect(0, 0, d, d); rumore(c, d, 3000, ['#24501f', '#3f7a3a', '#4a8a42'], 4) }) }),
+      fioriBianchi: mat('#fbf7f0', 0.7, 0, { flatShading: true }),
     }
-    this.materiali.pista.map!.repeat.set(0.5, 0.5)
+    for (const m of [this.materiali.pista, this.materiali.prato, this.materiali.ghiaia, this.materiali.siepe]) m.map!.repeat.set(0.5, 0.5)
+    this.materiali.siepe.color.set('#ffffff')
 
     this.evidenzia.position.y = 0.012
     this.evidenzia.renderOrder = 2
@@ -482,6 +626,7 @@ export class Scena3D {
       if (!prima) this.inquadra()
     }
     this.costruisciArredi(a)
+    this.adattaEstensione(a)
     this.aggiornaAiuti()
     this.richiedi()
   }
@@ -546,10 +691,8 @@ export class Scena3D {
   }
 
   inquadra() {
-    const punti = this.allestimento?.pareti.punti.length ? this.allestimento.pareti.punti : this.allestimento?.oggetti.map((o) => [o.x, o.z] as Punto) ?? []
-    const box = new THREE.Box2()
-    for (const [x, z] of punti) box.expandByPoint(new THREE.Vector2(x, z))
-    if (box.isEmpty()) box.set(new THREE.Vector2(-6, -5), new THREE.Vector2(6, 5))
+    const [x0, z0, x1, z1] = this.allestimento ? estensione(this.allestimento) : [-6, -5, 6, 5]
+    const box = new THREE.Box2(new THREE.Vector2(x0, z0), new THREE.Vector2(x1, z1))
     const centro = box.getCenter(new THREE.Vector2())
     const dim = box.getSize(new THREE.Vector2())
     const aspetto = Math.max(this.camera.aspect, 0.3)
@@ -694,12 +837,17 @@ export class Scena3D {
       this.sala.add(parete)
     })
 
-    // Griglia di aggancio (1 m) e ombre dimensionate sulla stanza
-    const box = new THREE.Box2()
-    for (const [x, z] of punti) box.expandByPoint(new THREE.Vector2(x, z))
-    if (box.isEmpty()) box.set(new THREE.Vector2(-15, -15), new THREE.Vector2(15, 15))
-    const centro = box.getCenter(new THREE.Vector2())
-    const lato = Math.ceil(Math.max(box.getSize(new THREE.Vector2()).x, box.getSize(new THREE.Vector2()).y)) + 4
+  }
+
+  /** Griglia di aggancio (1 m) e ombre dimensionate su pareti e arredi. */
+  private firmaEstensione = ''
+  private adattaEstensione(a: Allestimento) {
+    const [x0, z0, x1, z1] = estensione(a).map((v) => Math.round(v))
+    const firma = [x0, z0, x1, z1].join()
+    if (firma === this.firmaEstensione) return
+    this.firmaEstensione = firma
+    const centro = new THREE.Vector2((x0 + x1) / 2, (z0 + z1) / 2)
+    const lato = Math.ceil(Math.max(x1 - x0, z1 - z0)) + 4
     if (this.griglia) {
       this.scena.remove(this.griglia)
       this.griglia.dispose()
@@ -719,7 +867,7 @@ export class Scena3D {
     ombra.top = meta
     ombra.bottom = -meta
     ombra.near = 1
-    ombra.far = 80
+    ombra.far = 120
     ombra.updateProjectionMatrix()
     this.sole.target.position.set(centro.x, 0, centro.y)
     this.sole.position.set(centro.x + 4, 30, centro.y + 3)
@@ -746,7 +894,7 @@ export class Scena3D {
         const gruppo = new THREE.Group()
         for (const [g, m] of parti) {
           const mesh = new THREE.Mesh(g, this.materiali[m])
-          mesh.castShadow = m !== 'pista'
+          mesh.castShadow = !['pista', 'prato', 'ghiaia', 'vetro'].includes(m)
           mesh.receiveShadow = true
           gruppo.add(mesh)
         }
@@ -773,8 +921,9 @@ export class Scena3D {
     }
     let n = 0
     for (const o of a.oggetti) {
-      if (!voceCatalogo(o.tipo).sedie) continue
-      n++
+      const v = voceCatalogo(o.tipo)
+      if (!v.sedie || v.categoria !== 'Tavoli') continue
+      const testo = o.tipo === 'sposi' ? 'Sposi' : `T${++n}`
       const canvas = document.createElement('canvas')
       canvas.width = 128
       canvas.height = 64
@@ -787,7 +936,8 @@ export class Scena3D {
       c.font = 'bold 34px system-ui, sans-serif'
       c.textAlign = 'center'
       c.textBaseline = 'middle'
-      c.fillText(`T${n}`, 64, 34)
+      c.font = `bold ${testo.length > 3 ? 26 : 34}px system-ui, sans-serif`
+      c.fillText(testo, 64, 34)
       const t = new THREE.CanvasTexture(canvas)
       t.colorSpace = THREE.SRGBColorSpace
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, toneMapped: false }))
@@ -892,7 +1042,7 @@ export class Scena3D {
     this.inizioTocco = { x: e.clientX, y: e.clientY }
     if (this.modo !== 'sposta') return
     const id = this.oggettoSotto(e)
-    if (!id) return
+    if (!id || this.allestimento?.oggetti.find((o) => o.id === id)?.bloccato) return
     const voce = this.oggetti.get(id)
     const p = this.puntoPavimento(e)
     if (!voce || !p) return
@@ -949,8 +1099,10 @@ export class Scena3D {
     if (!inizio || Math.hypot(e.clientX - inizio.x, e.clientY - inizio.y) > 6 || e.type === 'pointercancel') return
     // Tocco senza trascinamento
     if (this.modo === 'sposta') {
-      this.seleziona(null)
-      this.eventi.onSeleziona(null)
+      // Tocco su un arredo bloccato: si seleziona senza spostarlo
+      const id = this.oggettoSotto(e)
+      this.seleziona(id)
+      this.eventi.onSeleziona(id)
       return
     }
     const p = this.puntoPavimento(e)
@@ -981,6 +1133,11 @@ export class Scena3D {
   }
 
   private disegna() {
+    // Nebbia solo all'orizzonte, qualunque sia lo zoom
+    const nebbia = this.scena.fog as THREE.Fog
+    const distanza = this.camera.position.distanceTo(this.controlli.target)
+    nebbia.near = distanza * 1.6
+    nebbia.far = distanza * 4 + 40
     // Le pareti tra la camera e la sala diventano trasparenti, come in una casa delle bambole
     const cam = this.camera.position
     for (const p of this.pareti) {

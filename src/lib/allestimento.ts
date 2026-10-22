@@ -9,6 +9,8 @@ export type TipoArredo =
   | 'buffet' | 'bar' | 'torta'
   | 'palco' | 'pista' | 'dj' | 'cassa'
   | 'pianta' | 'colonna'
+  | 'sposi' | 'fila' | 'arco' | 'tappeto' | 'tableau' | 'confettata' | 'photobooth' | 'lanterna'
+  | 'gazebo' | 'albero' | 'siepe' | 'giardino' | 'vialetto' | 'porta'
 
 export type Pavimento = 'parquet' | 'marmo' | 'cotto' | 'cemento' | 'moquette' | 'prato'
 
@@ -23,6 +25,8 @@ export interface Oggetto {
   sedie?: number
   /** Lunghezza per tavolate e buffet (m) */
   lunghezza?: number
+  /** Bloccato: non si trascina per sbaglio (prati, vialetti, navata); un tocco lo seleziona */
+  bloccato?: boolean
 }
 
 export interface Planimetria {
@@ -44,7 +48,7 @@ export interface Allestimento {
   oggetti: Oggetto[]
 }
 
-export type CategoriaArredo = 'Tavoli' | 'Sedute' | 'Servizio' | 'Intrattenimento' | 'Decoro'
+export type CategoriaArredo = 'Tavoli' | 'Sedute' | 'Cerimonia' | 'Servizio' | 'Intrattenimento' | 'Decoro' | 'Esterno'
 
 export interface VoceCatalogo {
   tipo: TipoArredo
@@ -63,19 +67,33 @@ export const CATALOGO: VoceCatalogo[] = [
   { tipo: 'rettangolare', nome: 'Tavolo 180×80', categoria: 'Tavoli', dettaglio: 'fino a 8 posti', sedie: { iniziali: 6, max: 8 } },
   { tipo: 'quadrato', nome: 'Tavolo 80×80', categoria: 'Tavoli', dettaglio: 'fino a 4 posti', sedie: { iniziali: 4, max: 4 } },
   { tipo: 'imperiale', nome: 'Tavolata imperiale', categoria: 'Tavoli', dettaglio: 'larga 120 cm, lunghezza a scelta', sedie: { iniziali: 16, max: 60 }, lunghezza: { iniziale: 4.8, min: 1.8, max: 30 } },
+  { tipo: 'sposi', nome: 'Tavolo sposi', categoria: 'Tavoli', dettaglio: 'posti su un lato, ghirlanda di fiori', sedie: { iniziali: 2, max: 10 }, lunghezza: { iniziale: 3, min: 1.2, max: 8 } },
   { tipo: 'cocktail', nome: 'Tavolo cocktail', categoria: 'Tavoli', dettaglio: 'alto Ø60, in piedi' },
   { tipo: 'sedia', nome: 'Sedia', categoria: 'Sedute', dettaglio: 'chiavarina', posti: 1 },
   { tipo: 'sgabello', nome: 'Sgabello', categoria: 'Sedute', dettaglio: 'da bar', posti: 1 },
   { tipo: 'lounge', nome: 'Divanetto lounge', categoria: 'Sedute', dettaglio: '3 posti, 200×80', posti: 3 },
+  { tipo: 'fila', nome: 'Fila di sedie', categoria: 'Cerimonia', dettaglio: 'per rito civile o cerimonia', sedie: { iniziali: 6, max: 16 } },
+  { tipo: 'arco', nome: 'Arco floreale', categoria: 'Cerimonia', dettaglio: '240×260, fiori e verde' },
+  { tipo: 'tappeto', nome: 'Navata / tappeto', categoria: 'Cerimonia', dettaglio: 'larga 120 cm, lunghezza a scelta', lunghezza: { iniziale: 10, min: 2, max: 40 } },
+  { tipo: 'lanterna', nome: 'Lanterna', categoria: 'Cerimonia', dettaglio: 'con candela, a terra' },
   { tipo: 'buffet', nome: 'Buffet', categoria: 'Servizio', dettaglio: 'profondo 80 cm, lunghezza a scelta', lunghezza: { iniziale: 2.4, min: 1.2, max: 20 } },
   { tipo: 'bar', nome: 'Bancone bar', categoria: 'Servizio', dettaglio: '300×70, alto 110', lunghezza: { iniziale: 3, min: 1.5, max: 12 } },
   { tipo: 'torta', nome: 'Tavolo torta', categoria: 'Servizio', dettaglio: 'Ø80 con torta' },
+  { tipo: 'confettata', nome: 'Confettata', categoria: 'Servizio', dettaglio: 'tavolo Ø120 con vasi di confetti' },
+  { tipo: 'tableau', nome: 'Tableau de mariage', categoria: 'Servizio', dettaglio: 'pannello su cavalletto' },
   { tipo: 'palco', nome: 'Palco / pedana', categoria: 'Intrattenimento', dettaglio: '400×300, alto 40', lunghezza: { iniziale: 4, min: 2, max: 16 } },
   { tipo: 'pista', nome: 'Pista da ballo', categoria: 'Intrattenimento', dettaglio: '500×500', lunghezza: { iniziale: 5, min: 2, max: 16 } },
   { tipo: 'dj', nome: 'Consolle DJ', categoria: 'Intrattenimento', dettaglio: '160×70' },
   { tipo: 'cassa', nome: 'Cassa audio', categoria: 'Intrattenimento', dettaglio: 'su stativo' },
+  { tipo: 'photobooth', nome: 'Photo booth', categoria: 'Intrattenimento', dettaglio: 'parete fiorita 240×240' },
   { tipo: 'pianta', nome: 'Pianta in vaso', categoria: 'Decoro', dettaglio: 'in vaso, alta 160' },
   { tipo: 'colonna', nome: 'Colonna / pilastro', categoria: 'Decoro', dettaglio: '40×40, alta come le pareti' },
+  { tipo: 'porta', nome: 'Portone / vetrata', categoria: 'Decoro', dettaglio: '220×280, da appoggiare alla parete' },
+  { tipo: 'gazebo', nome: 'Gazebo', categoria: 'Esterno', dettaglio: 'telo bianco, lato a scelta', lunghezza: { iniziale: 6, min: 3, max: 12 } },
+  { tipo: 'giardino', nome: 'Prato', categoria: 'Esterno', dettaglio: 'area verde, larghezza a scelta', lunghezza: { iniziale: 20, min: 4, max: 80 } },
+  { tipo: 'vialetto', nome: 'Vialetto', categoria: 'Esterno', dettaglio: 'ghiaia, largo 2 m', lunghezza: { iniziale: 8, min: 2, max: 40 } },
+  { tipo: 'albero', nome: 'Albero', categoria: 'Esterno', dettaglio: 'alto circa 5 m' },
+  { tipo: 'siepe', nome: 'Siepe', categoria: 'Esterno', dettaglio: 'alta 120 cm, lunghezza a scelta', lunghezza: { iniziale: 6, min: 1, max: 40 } },
 ]
 
 export const voceCatalogo = (tipo: TipoArredo) => CATALOGO.find((c) => c.tipo === tipo)!
@@ -166,40 +184,52 @@ export const sedieMaxImperiale = (lunghezza: number) => 2 * Math.floor(lunghezza
 
 export function riepilogo(a: Allestimento) {
   const perTipo = new Map<TipoArredo, number>()
-  let coperti = 0, sedie = 0
+  let coperti = 0, sedie = 0, cerimonia = 0, appoggio = 0
   for (const o of a.oggetti) {
     perTipo.set(o.tipo, (perTipo.get(o.tipo) ?? 0) + 1)
     const v = voceCatalogo(o.tipo)
     const p = postiOggetto(o)
-    coperti += p
+    // Coperti = posti a tavola; le sedie della cerimonia sono degli stessi ospiti, lounge e sgabelli sono posti di appoggio
+    if (v.categoria === 'Cerimonia') cerimonia += p
+    else if (v.categoria === 'Tavoli' || o.tipo === 'sedia') coperti += p
+    else appoggio += p
     if (v.sedie || o.tipo === 'sedia') sedie += p
   }
   const area = areaStanza(a.pareti)
   return {
     righe: CATALOGO.filter((c) => perTipo.has(c.tipo)).map((c) => ({ voce: c, quantita: perTipo.get(c.tipo)! })),
     coperti,
+    cerimonia,
+    appoggio,
     sedie,
     area,
-    tavoli: a.oggetti.filter((o) => voceCatalogo(o.tipo).categoria === 'Tavoli').length,
+    tavoli: a.oggetti.filter((o) => voceCatalogo(o.tipo).categoria === 'Tavoli' && o.tipo !== 'cocktail').length,
   }
 }
 
 /** Raggio approssimato dell'ingombro a terra, sedie comprese (m). */
-export function raggioIngombro(o: Pick<Oggetto, 'tipo' | 'lunghezza'>) {
+export function raggioIngombro(o: Pick<Oggetto, 'tipo' | 'lunghezza' | 'sedie'>) {
   const l = o.lunghezza ?? voceCatalogo(o.tipo).lunghezza?.iniziale ?? 1
   const fissi: Partial<Record<TipoArredo, number>> = {
     tondo_150: 1.45, tondo_180: 1.6, rettangolare: 1.35, quadrato: 0.95, cocktail: 0.45, sedia: 0.35, sgabello: 0.3,
     lounge: 1.1, torta: 0.55, dj: 0.95, cassa: 0.4, pianta: 0.45, colonna: 0.3,
   }
   if (o.tipo === 'imperiale') return l / 2 + 0.7
+  if (o.tipo === 'fila') return (o.sedie ?? 6) * 0.28 + 0.2
+  if (o.tipo === 'giardino') return l * 0.6
+  if (o.tipo === 'gazebo') return l * 0.7
+  if (o.tipo === 'arco' || o.tipo === 'photobooth') return 1.3
+  if (o.tipo === 'albero') return 1.6
+  if (o.tipo === 'porta') return 1.2
+  if (o.tipo === 'lanterna') return 0.25
   if (o.tipo === 'palco' || o.tipo === 'pista') return l * 0.65
   return fissi[o.tipo] ?? l / 2 + 0.2
 }
 
 /** Primo punto libero vicino a (x, z), cercando a spirale su una griglia di 50 cm. */
-export function postoLibero(oggetti: Oggetto[], nuovo: Pick<Oggetto, 'tipo' | 'lunghezza'>, x: number, z: number): Punto {
+export function postoLibero(oggetti: Oggetto[], nuovo: Pick<Oggetto, 'tipo' | 'lunghezza' | 'sedie'>, x: number, z: number): Punto {
   const r = raggioIngombro(nuovo)
-  const libero = (px: number, pz: number) => oggetti.every((o) => Math.hypot(o.x - px, o.z - pz) >= r + raggioIngombro(o) - 0.3)
+  const libero = (px: number, pz: number) => oggetti.every((o) => A_TERRA.has(o.tipo) || Math.hypot(o.x - px, o.z - pz) >= r + raggioIngombro(o) - 0.3)
   const x0 = Math.round(x * 2) / 2, z0 = Math.round(z * 2) / 2
   for (let anello = 0; anello <= 40; anello++) {
     for (let i = -anello; i <= anello; i++) {
@@ -210,4 +240,18 @@ export function postoLibero(oggetti: Oggetto[], nuovo: Pick<Oggetto, 'tipo' | 'l
     }
   }
   return [x0, z0]
+}
+
+/** Superfici calpestabili: gli altri arredi si appoggiano sopra. */
+export const A_TERRA = new Set<TipoArredo>(['giardino', 'vialetto', 'tappeto', 'pista'])
+
+/** Rettangolo che contiene pareti e arredi: [minX, minZ, maxX, maxZ]. */
+export function estensione(a: Allestimento): [number, number, number, number] {
+  let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity
+  const aggiungi = (x: number, z: number, r = 0) => {
+    x0 = Math.min(x0, x - r); z0 = Math.min(z0, z - r); x1 = Math.max(x1, x + r); z1 = Math.max(z1, z + r)
+  }
+  for (const [x, z] of a.pareti.punti) aggiungi(x, z)
+  for (const o of a.oggetti) aggiungi(o.x, o.z, o.tipo === 'giardino' ? (o.lunghezza ?? 20) / 2 : raggioIngombro(o))
+  return x0 === Infinity ? [-6, -5, 6, 5] : [x0, z0, x1, z1]
 }

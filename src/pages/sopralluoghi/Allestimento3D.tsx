@@ -7,13 +7,14 @@ import {
 } from '../../lib/allestimento'
 import { caricaFile, linkFirmati } from '../../lib/file'
 import { formatData } from '../../lib/format'
+import { MODELLI, type Modello } from '../../lib/modelli'
 import { Scena3D, type Modo, type Vista } from '../../lib/scena3d'
 import { messaggioErrore, supabase } from '../../lib/supabase'
 import type { FileSopralluogo, Sopralluogo } from '../../lib/types'
 import { oppureErrore, useDati } from '../../lib/useDati'
 
-type Pannello = 'arredi' | 'stanza' | 'riepilogo'
-const CATEGORIE: CategoriaArredo[] = ['Tavoli', 'Sedute', 'Servizio', 'Intrattenimento', 'Decoro']
+type Pannello = 'arredi' | 'modelli' | 'stanza' | 'riepilogo'
+const CATEGORIE: CategoriaArredo[] = ['Tavoli', 'Sedute', 'Cerimonia', 'Servizio', 'Intrattenimento', 'Decoro', 'Esterno']
 const MAX_STORIA = 60
 
 const nuovoId = () => crypto.randomUUID().slice(0, 8)
@@ -141,13 +142,28 @@ function EditorAllestimento({ s, file, url, ricarica }: {
     }
   }, [modifica, modificaOggetto])
 
-  useEffect(() => scena.current?.aggiorna(allestimento, url), [allestimento, url])
+  // Dopo aver caricato un modello la vista si adatta alla nuova location
+  const daInquadrare = useRef(false)
+  useEffect(() => {
+    scena.current?.aggiorna(allestimento, url)
+    if (daInquadrare.current) {
+      daInquadrare.current = false
+      scena.current?.inquadra()
+    }
+  }, [allestimento, url])
   useEffect(() => scena.current?.seleziona(selezionato), [selezionato])
   useEffect(() => scena.current?.impostaVista(vista), [vista])
   useEffect(() => scena.current?.impostaModo(modo), [modo])
   useEffect(() => scena.current?.impostaAggancio(aggancio), [aggancio])
   useEffect(() => scena.current?.impostaNumeri(numeri), [numeri])
   useEffect(() => scena.current?.marcatori(calibrazione), [calibrazione])
+
+  // I messaggi di conferma spariscono da soli
+  useEffect(() => {
+    if (messaggio?.tipo !== 'successo') return
+    const t = setTimeout(() => setMessaggio(null), 5000)
+    return () => clearTimeout(t)
+  }, [messaggio])
 
   // Avviso prima di chiudere la pagina con modifiche non salvate
   useEffect(() => {
@@ -208,6 +224,18 @@ function EditorAllestimento({ s, file, url, ricarica }: {
     window.addEventListener('keydown', tasto)
     return () => window.removeEventListener('keydown', tasto)
   }, [annulla, elimina, ruota])
+
+  function applicaModello(m: Modello) {
+    const vuoto = !allestimento.oggetti.length
+    if (!vuoto && !confirm(`Caricare “${m.nome}”? Pareti e arredi attuali vengono sostituiti (puoi sempre annullare).`)) return
+    // La planimetria e le foto restano disponibili: si tolgono solo dalla scena
+    modifica(() => m.crea())
+    daInquadrare.current = true
+    setSelezionato(null)
+    setModo('sposta')
+    setMessaggio({ tipo: 'successo', testo: `${m.nome}: trascina, ruota o elimina gli arredi per adattarlo alla tua location.` })
+    if (window.matchMedia('(max-width: 767px)').matches) setPannelloAperto(false)
+  }
 
   async function salva() {
     setSalvataggio(true)
@@ -297,8 +325,8 @@ function EditorAllestimento({ s, file, url, ricarica }: {
         </div>
 
         {/* Messaggi e istruzioni */}
-        <div className="pointer-events-none absolute inset-x-0 top-20 flex justify-center px-16">
-          <div className="pointer-events-auto max-w-sm space-y-2">
+        <div className="pointer-events-none absolute top-20 right-3 left-36 flex justify-center">
+          <div className="pointer-events-auto w-full max-w-sm space-y-2">
             {modo === 'pareti' && (
               <Avviso tipo="info">
                 Tocca il pavimento per aggiungere gli angoli della sala. Tocca il punto verde per chiuderla.{' '}
@@ -359,6 +387,9 @@ function EditorAllestimento({ s, file, url, ricarica }: {
                 />
               )}
               <div className="ml-auto flex gap-2">
+                <BottonePiccolo onClick={() => modificaOggetto(oggetto.id, { bloccato: !oggetto.bloccato })} etichetta={oggetto.bloccato ? 'Sblocca' : 'Blocca'}>
+                  {oggetto.bloccato ? '🔒 Sblocca' : 'Blocca'}
+                </BottonePiccolo>
                 <BottonePiccolo onClick={duplica} etichetta="Duplica">Duplica</BottonePiccolo>
                 <BottonePiccolo onClick={elimina} etichetta="Elimina" pericolo>Elimina</BottonePiccolo>
               </div>
@@ -370,13 +401,13 @@ function EditorAllestimento({ s, file, url, ricarica }: {
       {/* Pannello laterale (in basso sul telefono) */}
       <aside className={`flex flex-col border-slate-200 bg-white md:h-full md:w-80 md:border-l ${pannelloAperto ? 'max-h-[45vh] md:max-h-none' : ''} border-t md:border-t-0`}>
         <div className="flex items-center border-b border-slate-200">
-          {(['arredi', 'stanza', 'riepilogo'] as Pannello[]).map((p) => (
+          {(['arredi', 'modelli', 'stanza', 'riepilogo'] as Pannello[]).map((p) => (
             <button
               key={p}
               onClick={() => { setPannello(p); setPannelloAperto(true) }}
               className={`min-h-11 flex-1 text-sm font-medium capitalize ${pannello === p && pannelloAperto ? 'border-b-2 border-slate-900 text-slate-900' : 'text-slate-500'}`}
             >
-              {p === 'riepilogo' ? `Riepilogo · ${r.coperti}` : p}
+              {p === 'riepilogo' ? <>Totale<span className="hidden sm:inline"> · {r.coperti}</span></> : p === 'stanza' ? 'Sala' : p}
             </button>
           ))}
           <button className="min-h-11 px-3 text-slate-500 md:hidden" onClick={() => setPannelloAperto((v) => !v)} aria-label={pannelloAperto ? 'Chiudi pannello' : 'Apri pannello'}>
@@ -385,7 +416,8 @@ function EditorAllestimento({ s, file, url, ricarica }: {
         </div>
         {pannelloAperto && (
           <div className="min-h-0 flex-1 overflow-y-auto p-3">
-            {pannello === 'arredi' && <PannelloArredi onAggiungi={aggiungi} />}
+            {pannello === 'arredi' && <PannelloArredi onAggiungi={aggiungi} vuoto={!allestimento.oggetti.length} onModelli={() => setPannello('modelli')} />}
+            {pannello === 'modelli' && <PannelloModelli onScegli={applicaModello} />}
             {pannello === 'stanza' && (
               <PannelloStanza
                 allestimento={allestimento}
@@ -428,10 +460,30 @@ function EditorAllestimento({ s, file, url, ricarica }: {
 // ---------------------------------------------------------------------------
 // Pannelli
 // ---------------------------------------------------------------------------
-function PannelloArredi({ onAggiungi }: { onAggiungi: (tipo: Oggetto['tipo']) => void }) {
+function PannelloModelli({ onScegli }: { onScegli: (m: Modello) => void }) {
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-slate-500">Location complete già allestite: caricane una e adattala trascinando, ruotando o eliminando gli arredi.</p>
+      {MODELLI.map((m) => (
+        <button key={m.chiave} onClick={() => onScegli(m)} className="block w-full rounded-xl p-3 text-left ring-1 ring-slate-200 hover:bg-slate-50 active:bg-slate-100">
+          <span className="block text-sm font-semibold">{m.nome}</span>
+          <span className="mt-0.5 block text-xs leading-snug text-slate-500">{m.descrizione}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function PannelloArredi({ onAggiungi, vuoto, onModelli }: { onAggiungi: (tipo: Oggetto['tipo']) => void; vuoto: boolean; onModelli: () => void }) {
   return (
     <div className="space-y-4">
       <p className="text-xs text-slate-500">Tocca un arredo per aggiungerlo al centro della vista, poi trascinalo nella sala.</p>
+      {vuoto && (
+        <button onClick={onModelli} className="block w-full rounded-xl bg-slate-900 p-3 text-left text-white">
+          <span className="block text-sm font-semibold">Parti da una location completa →</span>
+          <span className="block text-xs text-slate-300">Matrimonio in villa, cena di gala, festa in giardino</span>
+        </button>
+      )}
       {CATEGORIE.map((c) => (
         <section key={c}>
           <h3 className="mb-1.5 text-xs font-semibold tracking-wide text-slate-500 uppercase">{c}</h3>
@@ -636,6 +688,18 @@ function PannelloRiepilogo({ r }: { r: ReturnType<typeof riepilogo> }) {
                 <td className="py-1.5 text-right font-medium tabular-nums">{quantita}</td>
               </tr>
             ))}
+            {r.appoggio > 0 && (
+              <tr className="border-b border-slate-100">
+                <td className="py-1.5">Posti lounge e sgabelli</td>
+                <td className="py-1.5 text-right font-medium tabular-nums">{r.appoggio}</td>
+              </tr>
+            )}
+            {r.cerimonia > 0 && (
+              <tr className="border-b border-slate-100">
+                <td className="py-1.5">Posti per la cerimonia</td>
+                <td className="py-1.5 text-right font-medium tabular-nums">{r.cerimonia}</td>
+              </tr>
+            )}
             {r.sedie > 0 && (
               <tr>
                 <td className="py-1.5">Sedie totali</td>
