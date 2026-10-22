@@ -19,6 +19,7 @@ PWA mobile-first (React + Vite + TypeScript + Tailwind) con backend Supabase (Po
 | PDF del preventivo generato sul telefono, tasso di conversione per cliente e totale | — | ✓ | ✓ |
 | Da preventivo accettato a evento (con fabbisogno di personale già calcolato) | — | ✓ | ✓ |
 | Sopralluoghi: checklist in loco, misure, foto e planimetrie (bucket privato) | — | ✓ | ✓ |
+| Zone del sopralluogo (bar, sala, cucina, back…): foto della location vuota, voci guidate e dettatura vocale, rendering con ChatGPT, prima/dopo e PDF per il cliente, funziona anche senza rete | — | ✓ | ✓ |
 | Allestimento 3D del sopralluogo: sala da misure o planimetria, foto sulle pareti, tavoli/sedie/buffet/palco, coperti e render PNG | — | ✓ | ✓ |
 | Dati aziendali e condizioni stampati sui preventivi | — | — | ✓ |
 | **Fase 2** · Documenti con scadenza (foto/PDF, bucket privato) | propri | — | tutti + verifica |
@@ -41,6 +42,14 @@ PWA mobile-first (React + Vite + TypeScript + Tailwind) con backend Supabase (Po
 Da configurare sul progetto Supabase: email con Brevo e funzione inviti (sezione 2), notifiche push (sezione 2-bis).
 
 **Preventivi.** Ogni voce ha prezzo di vendita e costo interno; il margine si vede solo nell’app. Dopo l’invio il preventivo è bloccato (il cliente ha quella versione): per cambiarlo si riporta in bozza. Quando passa a “inviato” l’azienda va “in trattativa”, quando è “accettato” diventa “cliente attivo”. Prima di inviare il primo PDF compila **Altro → Impostazioni → Dati aziendali** (ragione sociale, P. IVA, condizioni). Le email (inviti, notifiche) richiedono la configurazione di Brevo (sezione 2).
+
+**Zone e rendering con ChatGPT.** Nella scheda del sopralluogo, *+ Zona* crea una zona (bar, sala, buffet, sbarazzo, back/separé, cucina, ingresso, esterno o altra). Nella zona:
+1. si fotografa la location com’è, anche vuota (le foto vengono ridotte prima dell’invio);
+2. si sceglie cosa allestire toccando le voci guidate, si detta o scrive la descrizione (🎤 *Detta*: riconoscimento vocale del browser, ottimo su Chrome Android; altrove si usa il microfono della tastiera), si indicano stile, giorno/sera e colori; le *note operative* restano interne;
+3. *✨ Genera con ChatGPT* prepara l’istruzione (modificabile), la copia e condivide foto e istruzione con l’app ChatGPT; su computer offre *Copia istruzione*, *Scarica la foto* e *Apri ChatGPT*;
+4. l’immagine creata da ChatGPT si salva e si ricarica con *Carica il risultato*: tutte le versioni restano, con il confronto prima/dopo e la stella sul rendering da mostrare al cliente.
+
+*PDF per il cliente* crea la proposta: copertina con le zone e, per ogni zona, la foto allestita accanto alla location di oggi e a cosa è previsto. Senza rete, zone e foto si salvano sul telefono e partono da sole al ritorno del segnale. Serve la migrazione `20261022000002_zone_sopralluogo.sql`. Con un account API di OpenAI la generazione potrà diventare automatica, senza passare dall’app ChatGPT.
 
 **Allestimento 3D.** Dalla scheda di un sopralluogo → *Allestimento 3D*. La sala parte dalle misure scritte nel sopralluogo (es. “sala 18×12 m, altezza 4 m”); per sale irregolari si appoggia la planimetria sul pavimento, la si mette in scala toccando due punti di distanza nota e si ridisegnano gli angoli con “Disegna a mano”. Una foto frontale per parete, scattata in loco, si applica al lato interno della parete. Dal catalogo si aggiungono tavoli tondi, rettangolari, imperiali e degli sposi (con sedie e coperti), sedute, file di sedie, arco floreale, navata, lanterne, buffet, bar, confettata, tableau, palco, pista, consolle, photo booth, pianoforte, palloncini, tavolo regali, coffee station, schermo, leggio, roll-up, piante, pilastri, portoni e, per gli esterni, prato, vialetti, gazebo, alberi e siepi; si trascinano col dito o col mouse (aggancio a 25 cm), si ruotano e si duplicano. Nella scheda *Modelli* ci sono location complete già allestite da cui partire: per le feste private **Matrimonio in villa** (sala con tavolo sposi, 12 tavoli tondi, pista, buffet, bar, confettata e tableau; giardino con aperitivo sotto il gazebo e cerimonia all’aperto con arco floreale, navata, lanterne e 98 posti), **Festa di compleanno**, **Anniversario** e **Festa in giardino**; per le aziende **Convention con coffee break**, **Aperitivo aziendale**, **Cena di gala aziendale** e **Cena di gala**. Prati, vialetti e navata sono bloccati per non trascinarli per sbaglio: un tocco li seleziona e “Sblocca” li rende di nuovo spostabili. Il riepilogo conta coperti (posti a tavola), posti per la cerimonia, tavoli e m² per ospite; il pulsante **✨ Rendering** crea il *rendering finale*: l’app calcola da sola le inquadrature (vista d’insieme, pianta, viste ad altezza d’occhio dall’ingresso e dal fondo, una per ogni zona: tavolo sposi, palco, cerimonia, buffet, bar, gazebo, lounge, dettaglio del tavolo, aperitivo, giardino) e le renderizza in modo realistico, con soffitto e plafoniere, riflessi, occlusione ambientale, ombre morbide e cielo. Si scelgono le viste e la qualità (fino a 2560×1440); le immagini si sfogliano a schermo intero, si scaricano in un PDF da presentare al cliente (copertina con coperti e arredi, una pagina per vista) o si salvano tra le foto del sopralluogo. Il pulsante 📷 fa lo stesso rendering della sola vista corrente. Tastiera: Canc elimina, R ruota, Ctrl+Z annulla. Richiede la migrazione `20261022000001_allestimento_3d.sql`.
 
@@ -95,7 +104,7 @@ Altri comandi: `npm run build` (build di produzione), `npm run preview` (antepri
 
 1. Crea un progetto su https://supabase.com scegliendo la regione **Central EU (Frankfurt)** (dati in UE, GDPR).
 2. **Applica le migrazioni**, in ordine:
-   - *Da browser*: SQL Editor → incolla ed esegui `supabase/migrations/20261018000001_fase1_schema.sql`, poi `…000002_fase1_sicurezza.sql`, `…000003_fase2.sql`, `…000004_fase3.sql`, `…000005_fase4.sql`, `20261019000001_fatture.sql` e `20261022000001_allestimento_3d.sql`.
+   - *Da browser*: SQL Editor → incolla ed esegui `supabase/migrations/20261018000001_fase1_schema.sql`, poi `…000002_fase1_sicurezza.sql`, `…000003_fase2.sql`, `…000004_fase3.sql`, `…000005_fase4.sql`, `20261019000001_fatture.sql`, `20261022000001_allestimento_3d.sql` e `20261022000002_zone_sopralluogo.sql`.
    - *Oppure da terminale* (CLI senza installazione):
      ```bash
      npx supabase login
