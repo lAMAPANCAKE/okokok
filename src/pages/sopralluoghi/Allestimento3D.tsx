@@ -14,7 +14,7 @@ import type { FileSopralluogo, Sopralluogo } from '../../lib/types'
 import { oppureErrore, useDati } from '../../lib/useDati'
 
 type Pannello = 'arredi' | 'modelli' | 'stanza' | 'riepilogo'
-const CATEGORIE: CategoriaArredo[] = ['Tavoli', 'Sedute', 'Cerimonia', 'Servizio', 'Intrattenimento', 'Decoro', 'Esterno']
+const CATEGORIE: CategoriaArredo[] = ['Tavoli', 'Sedute', 'Cerimonia', 'Servizio', 'Intrattenimento', 'Aziendale', 'Decoro', 'Esterno']
 const MAX_STORIA = 60
 
 const nuovoId = () => crypto.randomUUID().slice(0, 8)
@@ -407,7 +407,7 @@ function EditorAllestimento({ s, file, url, ricarica }: {
               onClick={() => { setPannello(p); setPannelloAperto(true) }}
               className={`min-h-11 flex-1 text-sm font-medium capitalize ${pannello === p && pannelloAperto ? 'border-b-2 border-slate-900 text-slate-900' : 'text-slate-500'}`}
             >
-              {p === 'riepilogo' ? <>Totale<span className="hidden sm:inline"> · {r.coperti}</span></> : p === 'stanza' ? 'Sala' : p}
+              {p === 'riepilogo' ? <>Totale<span className="hidden sm:inline"> · {r.coperti || r.cerimonia}</span></> : p === 'stanza' ? 'Sala' : p}
             </button>
           ))}
           <button className="min-h-11 px-3 text-slate-500 md:hidden" onClick={() => setPannelloAperto((v) => !v)} aria-label={pannelloAperto ? 'Chiudi pannello' : 'Apri pannello'}>
@@ -464,11 +464,16 @@ function PannelloModelli({ onScegli }: { onScegli: (m: Modello) => void }) {
   return (
     <div className="space-y-2">
       <p className="text-xs text-slate-500">Location complete già allestite: caricane una e adattala trascinando, ruotando o eliminando gli arredi.</p>
-      {MODELLI.map((m) => (
-        <button key={m.chiave} onClick={() => onScegli(m)} className="block w-full rounded-xl p-3 text-left ring-1 ring-slate-200 hover:bg-slate-50 active:bg-slate-100">
-          <span className="block text-sm font-semibold">{m.nome}</span>
-          <span className="mt-0.5 block text-xs leading-snug text-slate-500">{m.descrizione}</span>
-        </button>
+      {(['Feste private', 'Eventi aziendali'] as const).map((g) => (
+        <section key={g} className="space-y-2 pt-1">
+          <h3 className="text-xs font-semibold tracking-wide text-slate-500 uppercase">{g}</h3>
+          {MODELLI.filter((m) => m.gruppo === g).map((m) => (
+            <button key={m.chiave} onClick={() => onScegli(m)} className="block w-full rounded-xl p-3 text-left ring-1 ring-slate-200 hover:bg-slate-50 active:bg-slate-100">
+              <span className="block text-sm font-semibold">{m.nome}</span>
+              <span className="mt-0.5 block text-xs leading-snug text-slate-500">{m.descrizione}</span>
+            </button>
+          ))}
+        </section>
       ))}
     </div>
   )
@@ -481,7 +486,7 @@ function PannelloArredi({ onAggiungi, vuoto, onModelli }: { onAggiungi: (tipo: O
       {vuoto && (
         <button onClick={onModelli} className="block w-full rounded-xl bg-slate-900 p-3 text-left text-white">
           <span className="block text-sm font-semibold">Parti da una location completa →</span>
-          <span className="block text-xs text-slate-300">Matrimonio in villa, cena di gala, festa in giardino</span>
+          <span className="block text-xs text-slate-300">Matrimonio, compleanno, anniversario, convention, aperitivo, cena di gala</span>
         </button>
       )}
       {CATEGORIE.map((c) => (
@@ -696,7 +701,7 @@ function PannelloRiepilogo({ r }: { r: ReturnType<typeof riepilogo> }) {
             )}
             {r.cerimonia > 0 && (
               <tr className="border-b border-slate-100">
-                <td className="py-1.5">Posti per la cerimonia</td>
+                <td className="py-1.5">Posti in platea o cerimonia</td>
                 <td className="py-1.5 text-right font-medium tabular-nums">{r.cerimonia}</td>
               </tr>
             )}
