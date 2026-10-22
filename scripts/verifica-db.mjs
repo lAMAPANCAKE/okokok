@@ -98,6 +98,18 @@ const st = (await come(R, `select stato from turni where id = '${t1}'`)).rows[0]
 st === 'confermato' ? pass('rispondi_turno: accettato') : fail(`stato ${st}`)
 await deveFallire(C1, `select rispondi_turno('${t1}', false)`, 'risposta doppia')
 await deveFallire(C1, `select rispondi_turno('${t2}', true)`, 'risposta a turno altrui')
+
+console.log('\nOrdine di servizio:')
+await come(R, `insert into ordini_servizio (evento_id, menu, scaletta) values ('${ev}', '[{"portata":"Antipasti","piatto":"Vitello tonnato","allergeni":[3,4]}]', '[{"ora":"19:00","attivita":"Arrivo ospiti"}]')`)
+;(await come(C1, `select count(*)::int n from ordini_servizio`)).rows[0].n === 1 ? pass('il collaboratore con turno confermato legge l’ordine di servizio') : fail('ordine non visibile al collaboratore confermato')
+;(await come(C2, `select count(*)::int n from ordini_servizio`)).rows[0].n === 0 ? pass('chi ha il turno solo proposto non lo vede') : fail('ordine visibile a turno proposto')
+;(await come(X, `select count(*)::int n from ordini_servizio`)).rows[0].n === 0 ? pass('chi non lavora all’evento non lo vede') : fail('ordine visibile a estranei')
+await come(C1, `update ordini_servizio set note = 'x' where evento_id = '${ev}'`)
+;(await come(R, `select coalesce(note, '') n from ordini_servizio where evento_id = '${ev}'`)).rows[0].n === '' ? pass('il collaboratore non modifica l’ordine di servizio') : fail('collaboratore modifica ordine')
+await deveFallire(R, `insert into ordini_servizio (evento_id, menu) values ('${ev}', '{}')`, 'menù che non è un elenco')
+const regola = (await come(A, `select coperti_per_cameriere_min a, coperti_per_cameriere_max b from impostazioni`)).rows[0]
+regola.a === 10 && regola.b === 12 ? pass('regola camerieri predefinita: 1 ogni 10–12 coperti') : fail('regola camerieri ' + JSON.stringify(regola))
+await deveFallire(A, `update impostazioni set coperti_per_cameriere_min = 15`, 'minimo coperti per cameriere oltre il massimo')
 await come(C2, `select rispondi_turno('${t2}', false, 'impegno')`)
 const cop = (await come(R, `select * from eventi_copertura where evento_id = '${ev}'`)).rows[0]
 cop.confermati === 1 && cop.rifiutati === 1 && cop.mancanti === 2 ? pass('copertura: 1 confermato, 1 rifiutato, mancano 2') : fail('copertura ' + JSON.stringify(cop))

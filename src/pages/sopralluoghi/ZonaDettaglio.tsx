@@ -8,7 +8,7 @@ import { comprimiImmagine } from '../../lib/immagini'
 import { messaggioErrore, supabase } from '../../lib/supabase'
 import type { FileSopralluogo, Sopralluogo } from '../../lib/types'
 import { oppureErrore, useDati } from '../../lib/useDati'
-import { STILI, TIPI_ZONA, istruzioneRendering, tipoZona, type StileZona, type TipoZona, type ZonaSopralluogo } from '../../lib/zone'
+import { CONSIGLI_SCATTO, CONSIGLI_SCATTO_GENERALI, STILI, TIPI_ZONA, istruzioneRendering, tipoZona, type StileZona, type TipoZona, type ZonaSopralluogo } from '../../lib/zone'
 
 type Modulo = Pick<ZonaSopralluogo, 'nome' | 'tipo' | 'voci' | 'stile'> & { descrizione: string; note_operative: string }
 type OpFoto = Extract<Operazione, { tipo: 'foto' }>
@@ -197,8 +197,15 @@ export default function ZonaDettaglio() {
           <Bottone variante="secondario" className="min-h-10 text-sm" caricamento={caricamentoFoto} onClick={() => inputFoto.current?.click()}>📷 Scatta o carica</Bottone>
           <input ref={inputFoto} type="file" accept="image/*" multiple hidden onChange={(e) => void caricaFoto(e.target.files, { tipo: 'foto' })} />
         </div>
+        <details className="mb-3 rounded-xl bg-sky-50 px-3 py-2 text-sm text-sky-900 ring-1 ring-sky-100" open={originali.length === 0}>
+          <summary className="cursor-pointer font-medium">📸 Come fotografare {form.tipo === 'altro' ? 'la zona' : `la zona ${info.nome.toLowerCase()}`}</summary>
+          <p className="mt-2 font-medium">{CONSIGLI_SCATTO[form.tipo]}</p>
+          <ul className="mt-1 list-disc space-y-0.5 pl-5">
+            {CONSIGLI_SCATTO_GENERALI.map((c) => <li key={c}>{c}</li>)}
+          </ul>
+        </details>
         {originali.length === 0 && fotoInCoda.length === 0 ? (
-          <p className="text-sm text-slate-500">Fotografa la zona com’è adesso, anche vuota: inquadra tutta l’area da allestire, in orizzontale, dall’altezza degli occhi.</p>
+          <p className="text-sm text-slate-500">Nessuna foto ancora: la zona si fotografa anche vuota.</p>
         ) : (
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {originali.map((f) => {

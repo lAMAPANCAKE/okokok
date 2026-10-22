@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { usePermessi } from '../../auth/AuthProvider'
 import { BadgePreventivo } from '../../components/commerciale'
+import { PropostaDaSopralluogo } from '../../components/PropostaDaSopralluogo'
 import { AreaTesto, Avviso, Bottone, Campo, Caricamento, Input, Intestazione, Scheda, Select } from '../../components/ui'
 import { formatData, formatEuro, formatPercentuale } from '../../lib/format'
 import { scaricaPdfPreventivo } from '../../lib/pdfPreventivo'
+import { camerieri, REGOLE_PREDEFINITE } from '../../lib/personale'
 import { messaggioErrore, supabase } from '../../lib/supabase'
 import type { Azienda, Impostazioni, Preventivo, Sopralluogo, StatoPreventivo, TipoVoce, TotaliPreventivo, VocePreventivo } from '../../lib/types'
 import { oppureErrore, useDati } from '../../lib/useDati'
@@ -68,7 +70,7 @@ export function NuovoPreventivo() {
       .single()
     setInvio(false)
     if (error) return setErrore(messaggioErrore(error))
-    navigate(`/preventivi/${data.id}`, { replace: true })
+    navigate(`/preventivi/${data.id}${sopralluogoId ? '?proposta=1' : ''}`, { replace: true })
   }
 
   const sopralluoghiCliente = (dati?.sopralluoghi ?? []).filter((s) => !aziendaId || !s.azienda_id || s.azienda_id === aziendaId)
@@ -141,6 +143,7 @@ const importoRiga = (r: RigaVoce, campo: 'prezzo' | 'costo') =>
 export default function PreventivoDettaglio() {
   const { id } = useParams() as { id: string }
   const navigate = useNavigate()
+  const [parametri] = useSearchParams()
   const { isAdmin } = usePermessi()
   const [testata, setTestata] = useState({ titolo: '', data_evento: '', luogo: '', ospiti: '', valido_fino: '', sconto_pct: '0', iva_pct: '22', note_cliente: '', note_interne: '' })
   const [righe, setRighe] = useState<RigaVoce[]>([])
@@ -210,6 +213,7 @@ export default function PreventivoDettaglio() {
     setRighe((rr) => rr.map((r) => (r.chiave === chiave ? { ...r, [campo]: v } : r)))
     setModificato(true)
   }
+  const regole = { copertiMin: dati.imp.coperti_per_cameriere_min ?? REGOLE_PREDEFINITE.copertiMin, copertiMax: dati.imp.coperti_per_cameriere_max ?? REGOLE_PREDEFINITE.copertiMax }
   const aggiungiRiga = (tipo: TipoVoce) => {
     setRighe((rr) => [
       ...rr,
@@ -217,7 +221,8 @@ export default function PreventivoDettaglio() {
         chiave: crypto.randomUUID(),
         tipo,
         descrizione: tipo === 'personale' ? '' : '',
-        quantita: tipo === 'personale' ? String(Math.max(1, Math.ceil((Number(testata.ospiti) || 0) / 15)) || 1) : '1',
+        // Personale: camerieri secondo la regola dell'azienda (1 ogni 10–12 coperti)
+        quantita: tipo === 'personale' ? String(Math.max(1, camerieri(Number(testata.ospiti) || 0, regole).proposti)) : '1',
         ore: tipo === 'personale' ? '6' : '',
         prezzo: '',
         costo: '',
@@ -445,6 +450,26 @@ export default function PreventivoDettaglio() {
           </Campo>
         </div>
       </Scheda>
+
+      {bozza && p.sopralluogo_id && (
+        <PropostaDaSopralluogo
+          sopralluogoId={p.sopralluogo_id}
+          ospiti={Number(testata.ospiti) || null}
+          regole={regole}
+          giaPresenti={righe.map((x) => x.descrizione)}
+          apertaIniziale={parametri.get('proposta') === '1' && righe.length === 0}
+          onAggiungi={(voci) => {
+            setRighe((rr) => [
+              ...rr,
+              ...voci.map((v) => ({
+                chiave: crypto.randomUUID(), tipo: v.tipo, descrizione: v.descrizione, quantita: String(v.quantita),
+                ore: v.ore ? String(v.ore) : '', prezzo: v.prezzo !== null ? String(v.prezzo) : '', costo: v.costo !== null ? String(v.costo) : '',
+              })),
+            ])
+            setModificato(true)
+          }}
+        />
+      )}
 
       {/* Voci */}
       <section className="mb-4">

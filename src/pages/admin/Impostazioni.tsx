@@ -37,6 +37,8 @@ function DatiAziendali({ impostazioni, onSalvato }: { impostazioni: TipoImpostaz
     condizioni_preventivo: impostazioni.condizioni_preventivo ?? '',
     iva_predefinita: String(impostazioni.iva_predefinita),
     validita_preventivo_giorni: String(impostazioni.validita_preventivo_giorni),
+    coperti_min: String(impostazioni.coperti_per_cameriere_min ?? 10),
+    coperti_max: String(impostazioni.coperti_per_cameriere_max ?? 12),
   })
   const [esito, setEsito] = useState<{ tipo: 'errore' | 'successo'; testo: string } | null>(null)
   const [invio, setInvio] = useState(false)
@@ -45,6 +47,8 @@ function DatiAziendali({ impostazioni, onSalvato }: { impostazioni: TipoImpostaz
   async function salva(e: FormEvent) {
     e.preventDefault()
     setEsito(null)
+    const copertiMin = parseInt(valori.coperti_min, 10), copertiMax = parseInt(valori.coperti_max, 10)
+    if (!(copertiMin >= 1 && copertiMax >= copertiMin && copertiMax <= 100)) return setEsito({ tipo: 'errore', testo: 'Coperti per cameriere: indica due numeri tra 1 e 100, il primo non più grande del secondo' })
     setInvio(true)
     const testo = (v: string) => v.trim() || null
     const { error } = await supabase
@@ -58,6 +62,8 @@ function DatiAziendali({ impostazioni, onSalvato }: { impostazioni: TipoImpostaz
         condizioni_preventivo: testo(valori.condizioni_preventivo),
         iva_predefinita: Math.max(0, Number(valori.iva_predefinita.replace(',', '.')) || 0),
         validita_preventivo_giorni: Math.max(1, parseInt(valori.validita_preventivo_giorni, 10) || 30),
+        coperti_per_cameriere_min: copertiMin,
+        coperti_per_cameriere_max: copertiMax,
       })
       .eq('id', true)
     setInvio(false)
@@ -93,6 +99,17 @@ function DatiAziendali({ impostazioni, onSalvato }: { impostazioni: TipoImpostaz
           <Campo etichetta="Validità preventivo (giorni)">
             <Input type="number" inputMode="numeric" min={1} value={valori.validita_preventivo_giorni} onChange={(e) => imposta('validita_preventivo_giorni')(e.target.value)} />
           </Campo>
+        </div>
+        <div>
+          <p className="mb-1 text-sm font-medium text-slate-700">Calcolo del personale</p>
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            1 cameriere ogni
+            <Input type="number" inputMode="numeric" min={1} max={100} className="w-20" aria-label="Coperti per cameriere, minimo" value={valori.coperti_min} onChange={(e) => imposta('coperti_min')(e.target.value)} />
+            –
+            <Input type="number" inputMode="numeric" min={1} max={100} className="w-20" aria-label="Coperti per cameriere, massimo" value={valori.coperti_max} onChange={(e) => imposta('coperti_max')(e.target.value)} />
+            coperti
+          </div>
+          <p className="mt-1 text-xs text-slate-500">Usato per proporre il personale nei preventivi creati da un sopralluogo.</p>
         </div>
         <Campo etichetta="Condizioni generali" aiuto="Stampate in fondo a ogni preventivo (pagamenti, cancellazioni, cosa è escluso…)">
           <AreaTesto rows={4} value={valori.condizioni_preventivo} onChange={(e) => imposta('condizioni_preventivo')(e.target.value)} />

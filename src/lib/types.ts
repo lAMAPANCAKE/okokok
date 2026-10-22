@@ -82,6 +82,9 @@ export interface Impostazioni {
   condizioni_preventivo: string | null
   iva_predefinita: number
   validita_preventivo_giorni: number
+  /** Regola dei camerieri: 1 ogni min–max coperti */
+  coperti_per_cameriere_min: number
+  coperti_per_cameriere_max: number
 }
 
 export interface RiepilogoMensile {
