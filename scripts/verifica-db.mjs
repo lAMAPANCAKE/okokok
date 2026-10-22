@@ -216,6 +216,14 @@ az.stato_pipeline === 'da_contattare' && az.responsabile_id === R ? pass('aziend
 ;(await come(C1, `select count(*)::int n from aziende`)).rows[0].n === 0 ? pass('il collaboratore non vede il CRM') : fail('collaboratore vede aziende')
 const so = (await come(R, `insert into sopralluoghi (azienda_id, titolo, checklist) values ('${az.id}', 'Villa', '[{"chiave":"accessi","stato":"ok"}]') returning id`)).rows[0].id
 ;(await come(C1, `select count(*)::int n from sopralluoghi`)).rows[0].n === 0 ? pass('il collaboratore non vede i sopralluoghi') : fail('collaboratore vede sopralluoghi')
+const zona = (await come(R, `insert into sopralluogo_zone (sopralluogo_id, tipo, nome, voci) values ('${so}', 'bar', 'Bar', '["Bancone bar operativo"]') returning id`)).rows[0].id
+;(await come(C1, `select count(*)::int n from sopralluogo_zone`)).rows[0].n === 0 ? pass('il collaboratore non vede le zone del sopralluogo') : fail('collaboratore vede zone')
+await deveFallire(R, `insert into sopralluogo_zone (sopralluogo_id, tipo, nome) values ('${so}', 'piscina', 'X')`, 'zona di tipo sconosciuto')
+const orig = (await come(R, `insert into sopralluogo_file (sopralluogo_id, zona_id, file_path, tipo) values ('${so}', '${zona}', '${so}/vuota.jpg', 'foto') returning id`)).rows[0].id
+await come(R, `insert into sopralluogo_file (sopralluogo_id, zona_id, origine_id, file_path, tipo, scelto) values ('${so}', '${zona}', '${orig}', '${so}/allestita.jpg', 'rendering', true)`)
+;(await come(R, `select count(*)::int n from sopralluogo_file where zona_id = '${zona}' and tipo = 'rendering' and origine_id = '${orig}'`)).rows[0].n === 1 ? pass('rendering della zona collegato alla foto originale') : fail('rendering zona')
+await come(R, `delete from sopralluogo_zone where id = '${zona}'`)
+;(await come(R, `select count(*)::int n from sopralluogo_file where file_path like '${so}/%alla%' or file_path like '${so}/vuota%'`)).rows[0].n === 0 ? pass('eliminando la zona si eliminano le sue foto') : fail('foto zona orfane')
 await come(R, `update sopralluoghi set allestimento = '{"versione":1,"oggetti":[{"id":"t1","tipo":"tondo_150","x":0,"z":0,"rot":0,"sedie":8}]}' where id = '${so}'`)
 ;(await come(R, `select allestimento->'oggetti'->0->>'tipo' t from sopralluoghi where id = '${so}'`)).rows[0].t === 'tondo_150' ? pass('allestimento 3D salvato sul sopralluogo') : fail('allestimento 3D')
 await deveFallire(R, `update sopralluoghi set allestimento = '[]' where id = '${so}'`, 'allestimento 3D che non è un oggetto')

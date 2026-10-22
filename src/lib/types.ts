@@ -327,8 +327,14 @@ export interface FileSopralluogo {
   id: string
   sopralluogo_id: string
   file_path: string
-  tipo: 'foto' | 'planimetria'
+  tipo: 'foto' | 'planimetria' | 'rendering'
   didascalia: string | null
+  /** Zona del sopralluogo a cui appartiene (null = foto generale) */
+  zona_id: string | null
+  /** Per i rendering: la foto originale della location vuota */
+  origine_id: string | null
+  /** Rendering scelto da mostrare al cliente */
+  scelto: boolean
   created_at: string
 }
 

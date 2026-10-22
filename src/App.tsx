@@ -25,6 +25,7 @@ import Menu from './pages/Menu'
 import PreventivoDettaglio, { NuovoPreventivo } from './pages/preventivi/PreventivoDettaglio'
 import Preventivi from './pages/preventivi/Preventivi'
 import SopralluogoDettaglio, { NuovoSopralluogo } from './pages/sopralluoghi/SopralluogoDettaglio'
+import ZonaDettaglio from './pages/sopralluoghi/ZonaDettaglio'
 import Sopralluoghi from './pages/sopralluoghi/Sopralluoghi'
 import MieiTurni from './pages/MieiTurni'
 import Notifiche from './pages/Notifiche'
@@ -139,6 +140,7 @@ export default function App() {
             <Route path="sopralluoghi" element={<SoloStaff><Sopralluoghi /></SoloStaff>} />
             <Route path="sopralluoghi/nuovo" element={<SoloStaff><NuovoSopralluogo /></SoloStaff>} />
             <Route path="sopralluoghi/:id" element={<SoloStaff><SopralluogoDettaglio /></SoloStaff>} />
+            <Route path="sopralluoghi/:id/zone/:zonaId" element={<SoloStaff><ZonaDettaglio /></SoloStaff>} />
 
             <Route path="admin/utenti" element={<SoloAdmin><Utenti /></SoloAdmin>} />
             <Route path="admin/impostazioni" element={<SoloAdmin><Impostazioni /></SoloAdmin>} />

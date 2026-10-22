@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AreaTesto, Avviso, Bottone, Campo, Caricamento, Input, Intestazione, Scheda, Select } from '../../components/ui'
+import { eseguiOAccoda, useCoda } from '../../lib/coda'
 import { caricaFile, eliminaFile, linkFirmati } from '../../lib/file'
+import { scaricaPdfZone } from '../../lib/pdfZone'
+import { TIPI_ZONA, tipoZona, type TipoZona, type ZonaSopralluogo } from '../../lib/zone'
 import { formatData, oggiIso } from '../../lib/format'
 import { messaggioErrore, supabase } from '../../lib/supabase'
 import { CHECKLIST_SOPRALLUOGO, type Azienda, type EsitoVoceChecklist, type Evento, type FileSopralluogo, type Sopralluogo, type VoceChecklist } from '../../lib/types'
@@ -97,13 +100,18 @@ export default function SopralluogoDettaglio() {
   const [aperta, setAperta] = useState<string | null>(null)
   const inputFoto = useRef<HTMLInputElement>(null)
   const inputPlanimetria = useRef<HTMLInputElement>(null)
+  const [sceltaZona, setSceltaZona] = useState(false)
+  const [creazioneZona, setCreazioneZona] = useState(false)
+  const [pdfZone, setPdfZone] = useState(false)
+  const coda = useCoda()
 
   const { dati, errore: erroreCaricamento, caricamento, ricarica } = useDati(async () => {
-    const [s, file] = await Promise.all([
+    const [s, file, zone] = await Promise.all([
       supabase.from('sopralluoghi').select('*').eq('id', id).single(),
       supabase.from('sopralluogo_file').select('*').eq('sopralluogo_id', id).order('created_at'),
+      supabase.from('sopralluogo_zone').select('*').eq('sopralluogo_id', id).order('ordine').order('created_at'),
     ])
-    return { s: oppureErrore(s) as Sopralluogo, file: oppureErrore(file) as FileSopralluogo[] }
+    return { s: oppureErrore(s) as Sopralluogo, file: oppureErrore(file) as FileSopralluogo[], zone: oppureErrore(zone) as ZonaSopralluogo[] }
   }, [id])
 
   useEffect(() => {
@@ -195,8 +203,58 @@ export default function SopralluogoDettaglio() {
     navigate(form.azienda_id ? `/crm/${form.azienda_id}` : '/sopralluoghi', { replace: true })
   }
 
+  async function nuovaZona(tipo: TipoZona) {
+    setCreazioneZona(true)
+    setErrore('')
+    const info = tipoZona(tipo)
+    const esistenti = dati!.zone.filter((z) => z.tipo === tipo).length
+    const zonaId = crypto.randomUUID()
+    try {
+      await eseguiOAccoda({
+        id: `zona-${zonaId}`,
+        tipo: 'zona',
+        riga: { id: zonaId, sopralluogo_id: id, tipo, nome: esistenti ? `${info.nome} ${esistenti + 1}` : info.nome, voci: [], stile: {}, descrizione: null, note_operative: null, ordine: dati!.zone.length },
+      })
+      navigate(`/sopralluoghi/${id}/zone/${zonaId}`)
+    } catch (e) {
+      setErrore(messaggioErrore(e))
+    } finally {
+      setCreazioneZona(false)
+    }
+  }
+
+  async function scaricaProposta() {
+    setPdfZone(true)
+    try {
+      const daStampare = zoneConRendering.map((z) => ({
+        zona: z,
+        coppie: z.scelti.map((r) => ({ prima: (r.origine_id && anteprime.get(fotoZone.find((f) => f.id === r.origine_id)?.file_path ?? '')) || null, dopo: anteprime.get(r.file_path)! })).filter((c) => c.dopo),
+      }))
+      await scaricaPdfZone({ titolo: form.titolo, data: form.data, indirizzo: form.indirizzo || null }, daStampare)
+    } catch (e) {
+      setErrore(messaggioErrore(e))
+    } finally {
+      setPdfZone(false)
+    }
+  }
+
+  // Zone: rendering scelti per il cliente (o, se nessuno è scelto, l'ultimo di ogni foto)
+  const fotoZone = dati.file.filter((f) => f.zona_id)
+  const zoneInCoda = coda.filter((o) => o.tipo === 'zona' && o.riga.sopralluogo_id === id && !dati.zone.some((z) => z.id === o.riga.id))
+  const zoneConRendering = dati.zone.map((z) => {
+    const rend = fotoZone.filter((f) => f.zona_id === z.id && f.tipo === 'rendering')
+    const perOrigine = new Map<string, FileSopralluogo>()
+    for (const r of rend) {
+      const chiave = r.origine_id ?? r.id
+      if (r.scelto || !perOrigine.get(chiave)?.scelto) perOrigine.set(chiave, r)
+    }
+    return { ...z, scelti: [...perOrigine.values()] }
+  }).filter((z) => z.scelti.length)
+  const fotoCoda = coda.filter((o) => o.tipo === 'foto' && o.riga.sopralluogo_id === id).length
+
   const compilate = checklist.filter((c) => c.stato).length
   const fileAperto = dati.file.find((f) => f.id === aperta)
+  const fileGenerali = dati.file.filter((f) => !f.zona_id)
   const eventiCliente = (opzioni?.eventi ?? []).filter((e) => !form.azienda_id || !e.azienda_id || e.azienda_id === form.azienda_id)
   const esiti: { valore: EsitoVoceChecklist; etichetta: string; attivo: string }[] = [
     { valore: 'ok', etichetta: 'OK', attivo: 'bg-emerald-600 text-white ring-emerald-600' },
@@ -312,8 +370,73 @@ export default function SopralluogoDettaglio() {
       </Scheda>
 
       <section className="mb-4">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">Zone e rendering ({dati.zone.length})</h2>
+          <div className="flex gap-2">
+            {zoneConRendering.length > 0 && (
+              <Bottone variante="secondario" className="min-h-10 text-sm" caricamento={pdfZone} disabled={modificato} onClick={() => void scaricaProposta()}>PDF per il cliente</Bottone>
+            )}
+            <Bottone className="min-h-10 text-sm" disabled={modificato} onClick={() => setSceltaZona((v) => !v)}>+ Zona</Bottone>
+          </div>
+        </div>
+        {modificato && <p className="mb-2 text-xs text-slate-500">Salva il sopralluogo per aggiungere o aprire le zone.</p>}
+        {sceltaZona && (
+          <Scheda className="mb-3">
+            <p className="mb-2 text-sm font-medium">Che zona vuoi aggiungere?</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {TIPI_ZONA.map((t) => (
+                <button key={t.tipo} disabled={creazioneZona} onClick={() => void nuovaZona(t.tipo)} className="min-h-12 rounded-xl px-3 text-left text-sm font-medium ring-1 ring-slate-300 hover:bg-slate-50 disabled:opacity-50">
+                  {t.icona} {t.nome}
+                </button>
+              ))}
+            </div>
+          </Scheda>
+        )}
+        {fotoCoda > 0 && <p className="mb-2 text-xs text-amber-700">{fotoCoda} foto salvate sul telefono, in attesa di rete.</p>}
+        {dati.zone.length === 0 && zoneInCoda.length === 0 ? (
+          <p className="text-sm text-slate-500">
+            Dividi la location in zone (bar, sala, cucina, back…): per ognuna scatti la foto com’è adesso, detti cosa va allestito e ottieni con ChatGPT la foto della zona pronta da mostrare al cliente.
+          </p>
+        ) : (
+          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {dati.zone.map((z) => {
+              const suoi = fotoZone.filter((f) => f.zona_id === z.id)
+              const copertina = zoneConRendering.find((x) => x.id === z.id)?.scelti[0] ?? suoi.find((f) => f.tipo === 'foto')
+              const nRend = suoi.filter((f) => f.tipo === 'rendering').length
+              return (
+                <li key={z.id}>
+                  <Link to={modificato ? '#' : `/sopralluoghi/${id}/zone/${z.id}`} className="flex items-center gap-3 rounded-2xl bg-white p-2 shadow-sm ring-1 ring-slate-200 hover:ring-slate-300">
+                    <span className="flex h-16 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 text-2xl">
+                      {copertina && anteprime.get(copertina.file_path) ? <img src={anteprime.get(copertina.file_path)} alt="" className="h-full w-full object-cover" /> : tipoZona(z.tipo).icona}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium">{z.nome}</span>
+                      <span className="block text-xs text-slate-500">
+                        {suoi.length - nRend} foto · {nRend} rendering{z.voci.length ? ` · ${z.voci.length} voci` : ''}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              )
+            })}
+            {zoneInCoda.map((o) => o.tipo === 'zona' && (
+              <li key={o.id}>
+                <Link to={`/sopralluoghi/${id}/zone/${o.riga.id}`} className="flex items-center gap-3 rounded-2xl bg-white p-2 ring-1 ring-amber-300">
+                  <span className="flex h-16 w-20 items-center justify-center rounded-xl bg-amber-50 text-2xl">{tipoZona(o.riga.tipo).icona}</span>
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">{o.riga.nome}</span>
+                    <span className="block text-xs text-amber-700">In attesa di rete</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="mb-4">
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Foto e planimetria ({dati.file.length})</h2>
+          <h2 className="text-lg font-semibold">Altre foto e planimetria ({fileGenerali.length})</h2>
         </div>
         <div className="mb-3 flex flex-wrap gap-2">
           <Bottone variante="secondario" className="min-h-10 text-sm" caricamento={caricamentoFile} onClick={() => inputFoto.current?.click()}>+ Foto</Bottone>
@@ -321,11 +444,11 @@ export default function SopralluogoDettaglio() {
           <input ref={inputFoto} type="file" accept="image/*" multiple hidden onChange={(e) => void carica(e.target.files, 'foto')} />
           <input ref={inputPlanimetria} type="file" accept="image/*,application/pdf" hidden onChange={(e) => void carica(e.target.files, 'planimetria')} />
         </div>
-        {dati.file.length === 0 ? (
+        {fileGenerali.length === 0 ? (
           <p className="text-sm text-slate-500">Scatta le foto direttamente dal telefono: ingressi, sale, cucina, punti critici. Una foto frontale per parete si può applicare alle pareti dell’allestimento 3D.</p>
         ) : (
           <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {dati.file.map((f) => {
+            {fileGenerali.map((f) => {
               const url = anteprime.get(f.file_path)
               const pdf = f.file_path.endsWith('.pdf')
               return (

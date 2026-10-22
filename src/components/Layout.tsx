@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth, usePermessi } from '../auth/AuthProvider'
+import { avviaCoda } from '../lib/coda'
 import { nomeCompleto } from '../lib/format'
 import { Campanella } from './Notifiche'
 
@@ -41,6 +43,8 @@ interface Voce {
 export function Layout() {
   const { profilo } = useAuth()
   const { isStaff, isAdmin } = usePermessi()
+  // Invia foto e zone salvate senza rete appena c'è connessione
+  useEffect(() => (isStaff ? avviaCoda() : undefined), [isStaff])
 
   // I responsabili non accedono ai documenti personali (GDPR).
   // Sul telefono lo staff ha 4 sezioni principali + "Altro" con il resto.
