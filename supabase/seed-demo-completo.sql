@@ -83,6 +83,9 @@ begin
   delete from public.pagamenti where collaboratore_id = any (c);
   select array_agg(id) into vecchi from public.eventi where nome like 'DEMO %';
   if vecchi is not null then
+    -- anche i rimborsi degli utenti DEMO dei seed precedenti
+    delete from public.rimborsi where evento_id = any (vecchi)
+      and collaboratore_id in (select id from auth.users where email like 'demo.%@example.com');
     update public.turni set ore_totali = null, ore_notturne = 0, ore_festive = 0, ore_straordinarie = 0, stato = 'annullato'
     where evento_id = any (vecchi) and stato = 'completato';
   end if;
