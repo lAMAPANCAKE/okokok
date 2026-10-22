@@ -107,6 +107,16 @@ await come(R, `insert into ordini_servizio (evento_id, menu, scaletta) values ('
 await come(C1, `update ordini_servizio set note = 'x' where evento_id = '${ev}'`)
 ;(await come(R, `select coalesce(note, '') n from ordini_servizio where evento_id = '${ev}'`)).rows[0].n === '' ? pass('il collaboratore non modifica l’ordine di servizio') : fail('collaboratore modifica ordine')
 await deveFallire(R, `insert into ordini_servizio (evento_id, menu) values ('${ev}', '{}')`, 'menù che non è un elenco')
+console.log('\nLista di carico:')
+await come(R, `insert into liste_carico (evento_id, coperti, voci) values ('${ev}', 100, '[{"chiave":"a","reparto":"sala","voce":"Piatti piani","quantita":110,"caricato":false},{"chiave":"b","reparto":"bar","voce":"Tumbler","quantita":200,"caricato":false}]')`)
+await come(C1, `select spunta_carico('${ev}', 'b', true)`)
+const carico = (await come(R, `select voci from liste_carico where evento_id = '${ev}'`)).rows[0].voci
+carico[1].caricato === true && carico[0].caricato === false && carico[1].quantita === 200 ? pass('il collaboratore confermato spunta una voce al carico, il resto non cambia') : fail('spunta carico ' + JSON.stringify(carico))
+await deveFallire(C2, `select spunta_carico('${ev}', 'a', true)`, 'spunta da chi ha il turno solo proposto')
+await deveFallire(X, `select spunta_carico('${ev}', 'a', true)`, 'spunta da chi non lavora all’evento')
+await come(C1, `update liste_carico set scorta_pct = 50 where evento_id = '${ev}'`)
+;(await come(R, `select scorta_pct from liste_carico where evento_id = '${ev}'`)).rows[0].scorta_pct === 10 ? pass('il collaboratore non modifica la lista di carico') : fail('collaboratore modifica lista')
+;(await come(C1, `select count(*)::int n from liste_carico`)).rows[0].n === 1 ? pass('il collaboratore confermato legge la lista di carico') : fail('lista non visibile al confermato')
 const regola = (await come(A, `select coperti_per_cameriere_min a, coperti_per_cameriere_max b from impostazioni`)).rows[0]
 regola.a === 10 && regola.b === 12 ? pass('regola camerieri predefinita: 1 ogni 10–12 coperti') : fail('regola camerieri ' + JSON.stringify(regola))
 await deveFallire(A, `update impostazioni set coperti_per_cameriere_min = 15`, 'minimo coperti per cameriere oltre il massimo')

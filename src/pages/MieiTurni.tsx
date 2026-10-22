@@ -60,9 +60,14 @@ export function SchedaTurno({ turno, onRisposto }: { turno: TurnoConEvento; onRi
       </dl>
       {ev?.note && turno.stato !== 'annullato' && <p className="mt-2 rounded-lg bg-slate-50 p-2 text-sm whitespace-pre-line text-slate-700">{ev.note}</p>}
       {(turno.stato === 'confermato' || turno.stato === 'completato') && (
-        <Link to={`/eventi/${turno.evento_id}/ordine`} className="mt-3 inline-flex min-h-10 items-center rounded-xl px-3 text-sm font-medium text-brand-700 ring-1 ring-brand-100">
-          Ordine di servizio: scaletta, menù e allergeni →
-        </Link>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link to={`/eventi/${turno.evento_id}/ordine`} className="inline-flex min-h-10 items-center rounded-xl px-3 text-sm font-medium text-brand-700 ring-1 ring-brand-100">
+            Ordine di servizio →
+          </Link>
+          <Link to={`/eventi/${turno.evento_id}/carico`} className="inline-flex min-h-10 items-center rounded-xl px-3 text-sm font-medium text-brand-700 ring-1 ring-brand-100">
+            Lista di carico →
+          </Link>
+        </div>
       )}
 
       {turno.stato === 'proposto' && onRisposto && (

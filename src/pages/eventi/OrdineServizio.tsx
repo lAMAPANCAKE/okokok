@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { usePermessi } from '../../auth/AuthProvider'
 import { Dettatura } from '../../components/Dettatura'
 import { AreaTesto, Avviso, Bottone, Caricamento, Input, Intestazione, Scheda, Select } from '../../components/ui'
@@ -141,6 +141,7 @@ export default function OrdineServizio() {
         azione={<Bottone variante="secondario" className="min-h-10 text-sm" onClick={() => void scaricaPdfOrdineServizio(evento, o, personale)}>PDF</Bottone>}
       />
       {evento.luogo && <p className="-mt-2 mb-3 text-sm text-slate-600">📍 {evento.luogo}</p>}
+      <Link to={`/eventi/${id}/carico`} className="mb-3 inline-flex min-h-10 items-center rounded-xl px-3 text-sm font-medium text-brand-700 ring-1 ring-brand-100">📦 Lista di carico →</Link>
       {messaggio && <div className="mb-3" onClick={() => setMessaggio(null)}><Avviso tipo={messaggio.tipo}>{messaggio.testo}</Avviso></div>}
       {!isStaff && !dati.ordine && <Avviso tipo="info">L’ordine di servizio non è ancora pronto: lo trovi qui appena il responsabile lo compila.</Avviso>}
 

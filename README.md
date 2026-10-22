@@ -20,6 +20,7 @@ PWA mobile-first (React + Vite + TypeScript + Tailwind) con backend Supabase (Po
 | Da preventivo accettato a evento (con fabbisogno di personale già calcolato) | — | ✓ | ✓ |
 | Sopralluoghi: checklist in loco, misure, foto e planimetrie (bucket privato) | — | ✓ | ✓ |
 | Ordine di servizio dell’evento: scaletta (anche da modelli), menù con i 14 allergeni UE, intolleranze, personale, checklist di montaggio, dress code, PDF | lettura (turno confermato) | ✓ | ✓ |
+| Lista di carico dell’evento per reparto (sala, bar, cucina, allestimento, consumabili) calcolata da sala 3D, menù e zone, con scorta %, spunta al carico e PDF | lettura e spunta (turno confermato) | ✓ | ✓ |
 | Preventivo dal sopralluogo: personale calcolato (camerieri 1 ogni 10–12 coperti, baristi, cuochi…), arredi del 3D, voci delle zone, ultimi prezzi usati | — | ✓ | ✓ |
 | Zone del sopralluogo (bar, sala, cucina, back…): foto della location vuota, voci guidate e dettatura vocale, rendering con ChatGPT, prima/dopo e PDF per il cliente, funziona anche senza rete | — | ✓ | ✓ |
 | Allestimento 3D del sopralluogo: sala da misure o planimetria, foto sulle pareti, tavoli/sedie/buffet/palco, coperti e render PNG | — | ✓ | ✓ |
@@ -54,6 +55,16 @@ Da configurare sul progetto Supabase: email con Brevo e funzione inviti (sezione
 - **dress code e note**, anche dettate.
 
 Il PDF si stampa o si manda allo staff. I collaboratori con turno confermato lo aprono da *I miei turni* in sola lettura (protetto dalla RLS). Serve la migrazione `20261022000003_ordine_servizio.sql`.
+
+**Lista di carico.** Nella scheda evento → *Lista di carico* (o dall’ordine di servizio). *✨ Calcola* la compila da:
+- **sala 3D:** tavoli, sedie, tovaglie, centrotavola;
+- **coperti e menù dell’ordine di servizio:** piatti piani, fondi e da dessert, posate e bicchieri per portata, flûte se c’è la torta o l’aperitivo;
+- **bar:** banconi, secchielli, tumbler e calici per ospite, 1 kg di ghiaccio a ospite;
+- **cucina:** chafing per buffet, gastronorm, isotermici;
+- **arredi di allestimento e voci delle zone**, nel reparto giusto;
+- **consumabili.**
+
+I reparti sono Sala (food), Bar (beverage), Cucina (food), Allestimento e Consumabili. Coperti, ospiti e **scorta %** (predefinita 10%) si modificano. *Aggiorna* ricalcola e tiene le voci scritte a mano e quelle già caricate. Al carico si spunta ogni voce (salvataggio immediato): possono farlo anche i collaboratori con turno confermato, tramite la funzione `spunta_carico`, senza poter modificare la lista. *Solo da caricare* nasconde quanto già caricato. Il PDF per magazzino e autista ha le caselle e le firme. Serve la migrazione `20261022000004_lista_carico.sql`.
 
 **Preventivo dal sopralluogo.** Da *Crea preventivo* nella scheda del sopralluogo, o nel preventivo in bozza collegato, *✨ Proponi voci dal sopralluogo* calcola:
 - **personale**: camerieri secondo la regola in *Impostazioni* (predefinita 1 ogni 10–12 coperti, con la forbice mostrata), responsabile di sala, 2 baristi per bancone, 1 addetto per buffet, cuochi 1 ogni 50 coperti, lavapiatti 1 ogni 100, sbarazzo 1 ogni 80;
@@ -124,7 +135,7 @@ Altri comandi: `npm run build` (build di produzione), `npm run preview` (antepri
 
 1. Crea un progetto su https://supabase.com scegliendo la regione **Central EU (Frankfurt)** (dati in UE, GDPR).
 2. **Applica le migrazioni**, in ordine:
-   - *Da browser*: SQL Editor → incolla ed esegui `supabase/migrations/20261018000001_fase1_schema.sql`, poi `…000002_fase1_sicurezza.sql`, `…000003_fase2.sql`, `…000004_fase3.sql`, `…000005_fase4.sql`, `20261019000001_fatture.sql`, `20261022000001_allestimento_3d.sql`, `20261022000002_zone_sopralluogo.sql` e `20261022000003_ordine_servizio.sql`.
+   - *Da browser*: SQL Editor → incolla ed esegui `supabase/migrations/20261018000001_fase1_schema.sql`, poi `…000002_fase1_sicurezza.sql`, `…000003_fase2.sql`, `…000004_fase3.sql`, `…000005_fase4.sql`, `20261019000001_fatture.sql`, `20261022000001_allestimento_3d.sql`, `20261022000002_zone_sopralluogo.sql`, `20261022000003_ordine_servizio.sql` e `20261022000004_lista_carico.sql`.
    - *Oppure da terminale* (CLI senza installazione):
      ```bash
      npx supabase login
