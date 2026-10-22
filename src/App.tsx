@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { lazy, Suspense, type ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth, usePermessi } from './auth/AuthProvider'
 import { Layout } from './components/Layout'
@@ -35,6 +35,9 @@ import Utenti from './pages/admin/Utenti'
 import Fatture from './pages/fatture/Fatture'
 import FatturaDettaglio from './pages/fatture/FatturaDettaglio'
 import ModuloFattura from './pages/fatture/ModuloFattura'
+
+// L'editor 3D (three.js) si scarica solo quando serve
+const Allestimento3D = lazy(() => import('./pages/sopralluoghi/Allestimento3D'))
 
 function Protetta({ children }: { children: ReactNode }) {
   const { session, profilo, caricamento, recuperoPassword, esci } = useAuth()
@@ -102,6 +105,11 @@ export default function App() {
           <Route path="/registrati" element={<SoloOspite><Registrati /></SoloOspite>} />
           <Route path="/reimposta-password" element={<ReimpostaPassword />} />
           <Route path="/benvenuto" element={<Benvenuto />} />
+
+          <Route
+            path="/sopralluoghi/:id/allestimento"
+            element={<Protetta><SoloStaff><Suspense fallback={<Caricamento />}><Allestimento3D /></Suspense></SoloStaff></Protetta>}
+          />
 
           <Route element={<Protetta><Layout /></Protetta>}>
             <Route index element={<Dashboard />} />

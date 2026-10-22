@@ -19,6 +19,7 @@ PWA mobile-first (React + Vite + TypeScript + Tailwind) con backend Supabase (Po
 | PDF del preventivo generato sul telefono, tasso di conversione per cliente e totale | — | ✓ | ✓ |
 | Da preventivo accettato a evento (con fabbisogno di personale già calcolato) | — | ✓ | ✓ |
 | Sopralluoghi: checklist in loco, misure, foto e planimetrie (bucket privato) | — | ✓ | ✓ |
+| Allestimento 3D del sopralluogo: sala da misure o planimetria, foto sulle pareti, tavoli/sedie/buffet/palco, coperti e render PNG | — | ✓ | ✓ |
 | Dati aziendali e condizioni stampati sui preventivi | — | — | ✓ |
 | **Fase 2** · Documenti con scadenza (foto/PDF, bucket privato) | propri | — | tutti + verifica |
 | Documenti obbligatori mancanti, promemoria a 30/15/7 giorni | propri | — | tutti |
@@ -40,6 +41,8 @@ PWA mobile-first (React + Vite + TypeScript + Tailwind) con backend Supabase (Po
 Da configurare sul progetto Supabase: email con Brevo e funzione inviti (sezione 2), notifiche push (sezione 2-bis).
 
 **Preventivi.** Ogni voce ha prezzo di vendita e costo interno; il margine si vede solo nell’app. Dopo l’invio il preventivo è bloccato (il cliente ha quella versione): per cambiarlo si riporta in bozza. Quando passa a “inviato” l’azienda va “in trattativa”, quando è “accettato” diventa “cliente attivo”. Prima di inviare il primo PDF compila **Altro → Impostazioni → Dati aziendali** (ragione sociale, P. IVA, condizioni). Le email (inviti, notifiche) richiedono la configurazione di Brevo (sezione 2).
+
+**Allestimento 3D.** Dalla scheda di un sopralluogo → *Allestimento 3D*. La sala parte dalle misure scritte nel sopralluogo (es. “sala 18×12 m, altezza 4 m”); per sale irregolari si appoggia la planimetria sul pavimento, la si mette in scala toccando due punti di distanza nota e si ridisegnano gli angoli con “Disegna a mano”. Una foto frontale per parete, scattata in loco, si applica al lato interno della parete. Dal catalogo si aggiungono tavoli tondi, rettangolari e imperiali (con sedie e coperti), sedute, buffet, bar, palco, pista, consolle, piante e pilastri; si trascinano col dito o col mouse (aggancio a 25 cm), si ruotano e si duplicano. Il riepilogo conta coperti, tavoli e m² per ospite; il pulsante 📷 crea un render PNG da scaricare o salvare tra le foto del sopralluogo. Tastiera: Canc elimina, R ruota, Ctrl+Z annulla. Richiede la migrazione `20261022000001_allestimento_3d.sql`.
 
 **Come funzionano saldo e rimborsi.** Saldo = compensi maturati + rimborsi approvati − pagamenti registrati. Quando un rimborso viene segnato come pagato, l’app registra da sola il pagamento corrispondente: quel pagamento non si può eliminare a parte. Un responsabile non può approvare le proprie richieste di rimborso (l’admin sì).
 
@@ -92,7 +95,7 @@ Altri comandi: `npm run build` (build di produzione), `npm run preview` (antepri
 
 1. Crea un progetto su https://supabase.com scegliendo la regione **Central EU (Frankfurt)** (dati in UE, GDPR).
 2. **Applica le migrazioni**, in ordine:
-   - *Da browser*: SQL Editor → incolla ed esegui `supabase/migrations/20261018000001_fase1_schema.sql`, poi `…000002_fase1_sicurezza.sql`, `…000003_fase2.sql`, `…000004_fase3.sql` e `…000005_fase4.sql`.
+   - *Da browser*: SQL Editor → incolla ed esegui `supabase/migrations/20261018000001_fase1_schema.sql`, poi `…000002_fase1_sicurezza.sql`, `…000003_fase2.sql`, `…000004_fase3.sql`, `…000005_fase4.sql`, `20261019000001_fatture.sql` e `20261022000001_allestimento_3d.sql`.
    - *Oppure da terminale* (CLI senza installazione):
      ```bash
      npx supabase login
