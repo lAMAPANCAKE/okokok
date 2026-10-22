@@ -84,6 +84,9 @@ export default function EventoDettaglio() {
         indietro="/eventi"
         azione={
           <div className="flex flex-wrap justify-end gap-2">
+            <Link to={`/eventi/${id}/gruppo`} className="inline-flex min-h-11 items-center rounded-xl bg-brand-600 px-3 text-sm font-medium text-white">
+              Gruppo di lavoro
+            </Link>
             <Link to={`/eventi/${id}/ordine`} className="inline-flex min-h-11 items-center rounded-xl bg-slate-900 px-3 text-sm font-medium text-white">
               Ordine di servizio
             </Link>

@@ -107,6 +107,12 @@ await come(R, `insert into ordini_servizio (evento_id, menu, scaletta) values ('
 await come(C1, `update ordini_servizio set note = 'x' where evento_id = '${ev}'`)
 ;(await come(R, `select coalesce(note, '') n from ordini_servizio where evento_id = '${ev}'`)).rows[0].n === '' ? pass('il collaboratore non modifica l’ordine di servizio') : fail('collaboratore modifica ordine')
 await deveFallire(R, `insert into ordini_servizio (evento_id, menu) values ('${ev}', '{}')`, 'menù che non è un elenco')
+console.log('\nGruppo di lavoro:')
+await come(R, `update eventi set punto_ritrovo = 'Ingresso di servizio', ora_ritrovo = '17:30', divisa = 'Camicia bianca', referente = 'Paolo 333' where id = '${ev}'`)
+;(await come(C1, `select punto_ritrovo p, ora_ritrovo::text o, divisa d from eventi where id = '${ev}'`)).rows[0]?.p === 'Ingresso di servizio' ? pass('il collaboratore con turno vede punto di ritrovo e divisa') : fail('ritrovo non visibile')
+await come(C1, `update eventi set divisa = 'x' where id = '${ev}'`)
+;(await come(R, `select divisa from eventi where id = '${ev}'`)).rows[0].divisa === 'Camicia bianca' ? pass('il collaboratore non cambia i dati del ritrovo') : fail('collaboratore modifica divisa')
+
 console.log('\nLista di carico:')
 await come(R, `insert into liste_carico (evento_id, coperti, voci) values ('${ev}', 100, '[{"chiave":"a","reparto":"sala","voce":"Piatti piani","quantita":110,"caricato":false},{"chiave":"b","reparto":"bar","voce":"Tumbler","quantita":200,"caricato":false}]')`)
 await come(C1, `select spunta_carico('${ev}', 'b', true)`)

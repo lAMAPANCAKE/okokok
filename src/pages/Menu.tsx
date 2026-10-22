@@ -10,6 +10,10 @@ export default function Menu() {
 
   const gruppi: { titolo: string; voci: { to: string; etichetta: string; descrizione: string }[] }[] = [
     {
+      titolo: 'Personale',
+      voci: [{ to: '/disponibilita-personale', etichetta: 'Disponibilità personale', descrizione: 'Chi è libero, impegnato o non disponibile, giorno per giorno' }],
+    },
+    {
       titolo: 'Commerciale',
       voci: [
         { to: '/crm', etichetta: 'Clienti', descrizione: 'CRM aziende, pipeline e follow-up' },

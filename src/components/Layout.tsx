@@ -52,6 +52,7 @@ export function Layout() {
     ? [
         { to: '/', etichetta: 'Home', icona: 'home', mobile: true },
         { to: '/eventi', etichetta: 'Eventi', icona: 'eventi', mobile: true },
+        { to: '/disponibilita-personale', etichetta: 'Disponibilità personale', icona: 'turni', mobile: false },
         { to: '/crm', etichetta: 'Clienti', icona: 'clienti', mobile: true },
         { to: '/preventivi', etichetta: 'Preventivi', icona: 'preventivi', mobile: false },
         { to: '/sopralluoghi', etichetta: 'Sopralluoghi', icona: 'sopralluoghi', mobile: false },

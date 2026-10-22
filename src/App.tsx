@@ -14,6 +14,8 @@ import Dashboard from './pages/Dashboard'
 import EventoDettaglio from './pages/eventi/EventoDettaglio'
 import Eventi from './pages/eventi/Eventi'
 import ModuloEvento from './pages/eventi/ModuloEvento'
+import DisponibilitaPersonale from './pages/DisponibilitaPersonale'
+import GruppoLavoro from './pages/eventi/GruppoLavoro'
 import ListaCarico from './pages/eventi/ListaCarico'
 import OrdineServizio from './pages/eventi/OrdineServizio'
 import AziendaDettaglio from './pages/crm/AziendaDettaglio'
@@ -130,6 +132,8 @@ export default function App() {
             {/* Aperto anche ai collaboratori con turno confermato: la protezione è nel database (RLS) */}
             <Route path="eventi/:id/ordine" element={<OrdineServizio />} />
             <Route path="eventi/:id/carico" element={<ListaCarico />} />
+            <Route path="eventi/:id/gruppo" element={<SoloStaff><GruppoLavoro /></SoloStaff>} />
+            <Route path="disponibilita-personale" element={<SoloStaff><DisponibilitaPersonale /></SoloStaff>} />
 
             <Route path="menu" element={<Menu />} />
             <Route path="disponibilita" element={<Disponibilita />} />
