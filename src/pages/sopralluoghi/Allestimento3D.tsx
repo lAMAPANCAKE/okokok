@@ -8,6 +8,8 @@ import {
 import { caricaFile, linkFirmati } from '../../lib/file'
 import { formatData } from '../../lib/format'
 import { MODELLI, type Modello } from '../../lib/modelli'
+import { scaricaPdfRendering } from '../../lib/pdfRendering'
+import { pianificaScatti, type Scatto } from '../../lib/rendering'
 import { Scena3D, type Modo, type Vista } from '../../lib/scena3d'
 import { messaggioErrore, supabase } from '../../lib/supabase'
 import type { FileSopralluogo, Sopralluogo } from '../../lib/types'
@@ -61,8 +63,7 @@ function EditorAllestimento({ s, file, url, ricarica }: {
   const [pannelloAperto, setPannelloAperto] = useState(true)
   const [calibrazione, setCalibrazione] = useState<Punto[]>([])
   const [salvataggio, setSalvataggio] = useState(false)
-  const [render, setRender] = useState<{ blob: Blob; url: string } | null>(null)
-  const [salvataggioRender, setSalvataggioRender] = useState(false)
+  const [galleria, setGalleria] = useState<Galleria | null>(null)
   const [messaggio, setMessaggio] = useState<{ tipo: 'errore' | 'successo' | 'info'; testo: string } | null>(null)
   const contenitore = useRef<HTMLDivElement>(null)
   const scena = useRef<Scena3D | null>(null)
@@ -247,33 +248,74 @@ function EditorAllestimento({ s, file, url, ricarica }: {
     setMessaggio({ tipo: 'successo', testo: 'Allestimento salvato.' })
   }
 
+  /** Render realistico della sola vista corrente, con le proporzioni dello schermo. */
   async function scattaRender() {
-    if (!scena.current) return
+    const sc = scena.current
+    if (!sc || !contenitore.current) return
     setSelezionato(null)
-    // Attende che la selezione sparisca dalla scena prima di scattare
-    await new Promise((r) => requestAnimationFrame(r))
-    const blob = await scena.current.foto()
-    if (render) URL.revokeObjectURL(render.url)
-    setRender({ blob, url: URL.createObjectURL(blob) })
+    const { clientWidth: w, clientHeight: h } = contenitore.current
+    await avviaRendering([sc.scattoCorrente()], Math.round(Math.max(1600, w * 2)), w / h)
   }
 
-  async function salvaRender() {
-    if (!render) return
-    setSalvataggioRender(true)
+  /** Apre la scelta delle inquadrature del rendering finale. */
+  function apriRenderingFinale() {
+    setSelezionato(null)
+    setModo('sposta')
+    const scatti = pianificaScatti(allestimento)
+    setGalleria({ fase: 'scelta', scatti, scelti: scatti.map(() => true), qualita: window.matchMedia('(max-width: 767px)').matches ? 1280 : 1920, foto: [], aperta: null, salvataggio: false })
+  }
+
+  async function avviaRendering(scatti: Scatto[], larghezza: number, rapporto?: number) {
+    const sc = scena.current
+    if (!sc || !scatti.length) return
+    setGalleria((g) => ({ ...(g ?? { scelti: [], qualita: larghezza, aperta: null, salvataggio: false }), fase: 'in_corso', scatti, foto: [] }))
+    // Attende che il riquadro di avanzamento compaia prima di occupare la GPU
+    await new Promise((ok) => requestAnimationFrame(() => setTimeout(ok, 0)))
     try {
-      const nome = `render-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.png`
-      const percorso = await caricaFile('sopralluoghi', s.id, new File([render.blob], nome, { type: 'image/png' }), 15 * 1024 * 1024)
-      const { error } = await supabase.from('sopralluogo_file').insert({ sopralluogo_id: s.id, file_path: percorso, tipo: 'foto', didascalia: 'Render allestimento 3D' })
-      if (error) throw error
-      setMessaggio({ tipo: 'successo', testo: 'Render salvato tra le foto del sopralluogo.' })
-      URL.revokeObjectURL(render.url)
-      setRender(null)
+      await sc.rendering(scatti, larghezza, (n, blob) => {
+        const foto = { titolo: scatti[n - 1].titolo, blob, url: URL.createObjectURL(blob) }
+        setGalleria((g) => g && { ...g, foto: [...g.foto, foto] })
+      }, rapporto)
+      setGalleria((g) => g && { ...g, fase: 'pronta' })
+    } catch (e) {
+      setGalleria((g) => g && { ...g, fase: 'pronta' })
+      setMessaggio({ tipo: 'errore', testo: `Rendering interrotto: ${messaggioErrore(e)}` })
+    }
+  }
+
+  function chiudiGalleria() {
+    galleria?.foto.forEach((f) => URL.revokeObjectURL(f.url))
+    setGalleria(null)
+  }
+
+  async function salvaRendering() {
+    if (!galleria?.foto.length) return
+    setGalleria({ ...galleria, salvataggio: true })
+    try {
+      const giorno = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')
+      for (const [i, f] of galleria.foto.entries()) {
+        const percorso = await caricaFile('sopralluoghi', s.id, new File([f.blob], `render-${giorno}-${i + 1}.jpg`, { type: 'image/jpeg' }), 15 * 1024 * 1024)
+        const { error } = await supabase.from('sopralluogo_file').insert({ sopralluogo_id: s.id, file_path: percorso, tipo: 'foto', didascalia: `Render · ${f.titolo}` })
+        if (error) throw error
+      }
+      setMessaggio({ tipo: 'successo', testo: `${galleria.foto.length === 1 ? 'Render salvato' : `${galleria.foto.length} render salvati`} tra le foto del sopralluogo.` })
+      chiudiGalleria()
       await ricarica()
     } catch (e) {
+      setGalleria((g) => g && { ...g, salvataggio: false })
       setMessaggio({ tipo: 'errore', testo: messaggioErrore(e) })
-    } finally {
-      setSalvataggioRender(false)
     }
+  }
+
+  async function pdfRendering() {
+    if (!galleria?.foto.length) return
+    const righe = [
+      r.coperti ? `${r.coperti} coperti · ${r.tavoli} tavoli` : '',
+      r.cerimonia ? `${r.cerimonia} posti in platea o cerimonia` : '',
+      r.area ? `Superficie sala ${Math.round(r.area)} m²` : '',
+      ...r.righe.slice(0, 14).map(({ voce, quantita }) => `${quantita} × ${voce.nome}`),
+    ].filter(Boolean)
+    await scaricaPdfRendering(s.titolo, s.data, righe, galleria.foto)
   }
 
   const r = useMemo(() => riepilogo(allestimento), [allestimento])
@@ -303,6 +345,9 @@ function EditorAllestimento({ s, file, url, ricarica }: {
           </div>
           <div className="pointer-events-auto flex gap-2">
             <BottoneMappa onClick={annulla} disabled={!storia.length} etichetta="Annulla (Ctrl+Z)">↶</BottoneMappa>
+            <Bottone variante="secondario" className="min-h-10 px-3 text-sm shadow-sm" aria-label="Rendering finale" title="Rendering finale" onClick={apriRenderingFinale} disabled={!allestimento.oggetti.length && !allestimento.pareti.punti.length}>
+              ✨<span className="hidden sm:inline"> Rendering</span>
+            </Bottone>
             <Bottone className="min-h-10 px-3 text-sm shadow-sm" caricamento={salvataggio} disabled={!modificato} onClick={() => void salva()}>
               {modificato ? 'Salva' : 'Salvato'}
             </Bottone>
@@ -321,7 +366,7 @@ function EditorAllestimento({ s, file, url, ricarica }: {
           <BottoneMappa onClick={() => scena.current?.inquadra()} etichetta="Inquadra la sala">⤢</BottoneMappa>
           <BottoneMappa onClick={() => setAggancio((v) => !v)} attivo={aggancio} etichetta="Griglia e aggancio a 25 cm">#</BottoneMappa>
           <BottoneMappa onClick={() => setNumeri((v) => !v)} attivo={numeri} etichetta="Numeri dei tavoli">T1</BottoneMappa>
-          <BottoneMappa onClick={() => void scattaRender()} etichetta="Scatta un render">📷</BottoneMappa>
+          <BottoneMappa onClick={() => void scattaRender()} etichetta="Render realistico di questa vista">📷</BottoneMappa>
         </div>
 
         {/* Messaggi e istruzioni */}
@@ -441,15 +486,141 @@ function EditorAllestimento({ s, file, url, ricarica }: {
         )}
       </aside>
 
-      {render && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-slate-950/95 p-4" role="dialog" aria-modal="true" aria-label="Render">
-          <div className="mb-3 flex flex-wrap justify-end gap-2">
-            <a href={render.url} download={`${s.titolo} - allestimento.png`} className="inline-flex min-h-10 items-center rounded-xl bg-white px-3 text-sm font-medium">Scarica PNG</a>
-            <Bottone variante="secondario" className="min-h-10 text-sm" caricamento={salvataggioRender} onClick={() => void salvaRender()}>Salva nel sopralluogo</Bottone>
-            <Bottone variante="fantasma" className="min-h-10 text-sm text-white hover:bg-white/10" onClick={() => { URL.revokeObjectURL(render.url); setRender(null) }}>Chiudi</Bottone>
+      {galleria && (
+        <FinestraRendering
+          galleria={galleria}
+          titolo={s.titolo}
+          onCambia={setGalleria}
+          onAvvia={() => void avviaRendering(galleria.scatti.filter((_, i) => galleria.scelti[i]), galleria.qualita)}
+          onPdf={() => void pdfRendering()}
+          onSalva={() => void salvaRendering()}
+          onChiudi={chiudiGalleria}
+        />
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Rendering finale
+// ---------------------------------------------------------------------------
+interface Galleria {
+  fase: 'scelta' | 'in_corso' | 'pronta'
+  scatti: Scatto[]
+  scelti: boolean[]
+  qualita: number
+  foto: { titolo: string; blob: Blob; url: string }[]
+  /** Indice della foto ingrandita */
+  aperta: number | null
+  salvataggio: boolean
+}
+
+const QUALITA = [
+  { valore: 1280, etichetta: 'Standard · 1280×720', nota: 'veloce, adatta al telefono' },
+  { valore: 1920, etichetta: 'Alta · Full HD', nota: 'per presentazioni e PDF' },
+  { valore: 2560, etichetta: 'Massima · 2560×1440', nota: 'più lenta' },
+]
+
+function FinestraRendering({ galleria: g, titolo, onCambia, onAvvia, onPdf, onSalva, onChiudi }: {
+  galleria: Galleria
+  titolo: string
+  onCambia: (g: Galleria) => void
+  onAvvia: () => void
+  onPdf: () => void
+  onSalva: () => void
+  onChiudi: () => void
+}) {
+  const scelti = g.scelti.filter(Boolean).length
+  const aperta = g.aperta !== null ? g.foto[g.aperta] : null
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-slate-950 text-white" role="dialog" aria-modal="true" aria-label="Rendering finale">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 p-3">
+        <div className="min-w-0">
+          <p className="truncate font-semibold">Rendering finale · {titolo}</p>
+          <p className="text-xs text-slate-400">
+            {g.fase === 'scelta' && `${scelti} inquadrature scelte`}
+            {g.fase === 'in_corso' && `Scatto ${Math.min(g.foto.length + 1, g.scatti.length)} di ${g.scatti.length}: ${g.scatti[g.foto.length]?.titolo ?? ''}…`}
+            {g.fase === 'pronta' && `${g.foto.length} immagini pronte`}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {g.fase === 'scelta' && <Bottone variante="secondario" className="min-h-10 text-sm" disabled={!scelti} onClick={onAvvia}>Avvia rendering</Bottone>}
+          {g.fase === 'pronta' && g.foto.length > 0 && (
+            <>
+              <Bottone variante="secondario" className="min-h-10 text-sm" onClick={onPdf}>Scarica PDF</Bottone>
+              <Bottone variante="secondario" className="min-h-10 text-sm" caricamento={g.salvataggio} onClick={onSalva}>Salva nel sopralluogo</Bottone>
+            </>
+          )}
+          <Bottone variante="fantasma" className="min-h-10 text-sm text-white hover:bg-white/10" disabled={g.fase === 'in_corso'} onClick={onChiudi}>Chiudi</Bottone>
+        </div>
+      </div>
+
+      {g.fase === 'in_corso' && (
+        <div className="h-1 bg-white/10">
+          <div className="h-1 bg-brand-500 transition-all" style={{ width: `${(g.foto.length / g.scatti.length) * 100}%` }} />
+        </div>
+      )}
+
+      <div className="min-h-0 flex-1 overflow-y-auto p-3">
+        {g.fase === 'scelta' ? (
+          <div className="mx-auto max-w-xl space-y-4">
+            <p className="text-sm text-slate-300">
+              Le inquadrature sono calcolate dalla tua sala: vista d’insieme, pianta, viste ad altezza d’occhio dall’ingresso e per ogni zona.
+              Il rendering aggiunge soffitto con luci calde, riflessi, ombre morbide e cielo.
+            </p>
+            <ul className="divide-y divide-white/10 rounded-xl ring-1 ring-white/10">
+              {g.scatti.map((sc, i) => (
+                <li key={i}>
+                  <label className="flex min-h-11 items-center gap-3 px-3">
+                    <input type="checkbox" className="h-5 w-5" checked={g.scelti[i]} onChange={(e) => onCambia({ ...g, scelti: g.scelti.map((v, k) => (k === i ? e.target.checked : v)) })} />
+                    <span className="text-sm">{sc.titolo}</span>
+                    <span className="ml-auto text-xs text-slate-400">{sc.casaDiBambola || sc.posizione[1] > 4 ? 'dall’alto' : 'altezza occhi'}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+            <fieldset className="space-y-2">
+              <legend className="mb-1 text-sm font-medium">Qualità</legend>
+              {QUALITA.map((q) => (
+                <label key={q.valore} className="flex items-center gap-3 text-sm">
+                  <input type="radio" name="qualita" className="h-4 w-4" checked={g.qualita === q.valore} onChange={() => onCambia({ ...g, qualita: q.valore })} />
+                  {q.etichetta} <span className="text-xs text-slate-400">{q.nota}</span>
+                </label>
+              ))}
+            </fieldset>
           </div>
-          <div className="flex min-h-0 flex-1 items-center justify-center">
-            <img src={render.url} alt="Render dell'allestimento" className="max-h-full max-w-full rounded-lg object-contain" />
+        ) : (
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {g.foto.map((f, i) => (
+              <li key={i}>
+                <button className="block w-full overflow-hidden rounded-xl bg-black text-left ring-1 ring-white/10" onClick={() => onCambia({ ...g, aperta: i })}>
+                  <img src={f.url} alt={f.titolo} className="aspect-video w-full object-cover" />
+                  <span className="block px-3 py-2 text-sm">{f.titolo}</span>
+                </button>
+              </li>
+            ))}
+            {g.fase === 'in_corso' && g.scatti.slice(g.foto.length).map((sc, i) => (
+              <li key={`attesa-${i}`} className="flex aspect-video items-center justify-center rounded-xl text-sm text-slate-500 ring-1 ring-white/10">
+                {i === 0 ? 'In corso…' : sc.titolo}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {aperta && g.aperta !== null && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-black p-3" role="dialog" aria-modal="true" aria-label={aperta.titolo}>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="truncate text-sm font-medium">{aperta.titolo} · {g.aperta + 1}/{g.foto.length}</p>
+            <div className="flex gap-2">
+              <a href={aperta.url} download={`${titolo} - ${aperta.titolo}.jpg`} className="inline-flex min-h-10 items-center rounded-xl bg-white px-3 text-sm font-medium text-slate-900">Scarica</a>
+              <Bottone variante="fantasma" className="min-h-10 text-sm text-white hover:bg-white/10" onClick={() => onCambia({ ...g, aperta: null })}>Chiudi</Bottone>
+            </div>
+          </div>
+          <div className="relative flex min-h-0 flex-1 items-center justify-center">
+            <img src={aperta.url} alt={aperta.titolo} className="max-h-full max-w-full object-contain" />
+            {g.aperta > 0 && <button className="absolute left-1 h-12 w-12 rounded-full bg-white/15 text-2xl" onClick={() => onCambia({ ...g, aperta: g.aperta! - 1 })} aria-label="Precedente">‹</button>}
+            {g.aperta < g.foto.length - 1 && <button className="absolute right-1 h-12 w-12 rounded-full bg-white/15 text-2xl" onClick={() => onCambia({ ...g, aperta: g.aperta! + 1 })} aria-label="Successiva">›</button>}
           </div>
         </div>
       )}

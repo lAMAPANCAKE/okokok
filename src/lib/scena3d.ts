@@ -3,6 +3,13 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js'
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
+import { dentroPoligono, RAPPORTO_RENDER, type Scatto } from './rendering'
 import { estensione, segmentiPareti, voceCatalogo, type Allestimento, type Oggetto, type Pavimento, type Punto, type TipoArredo } from './allestimento'
 
 export type Vista = '3d' | 'pianta'
@@ -573,6 +580,7 @@ export class Scena3D {
   private camera = new THREE.PerspectiveCamera(45, 1, 0.05, 500)
   private controlli: OrbitControls
   private sole = new THREE.DirectionalLight('#fff6e8', 2.2)
+  private cielo = new THREE.HemisphereLight('#ffffff', '#b8a68e', 1.4)
   private sala = new THREE.Group()
   private arredi = new THREE.Group()
   private aiuti = new THREE.Group()
@@ -635,7 +643,7 @@ export class Scena3D {
     this.caricatore.setCrossOrigin('anonymous')
     this.scena.background = new THREE.Color('#e8edf2')
     this.scena.fog = new THREE.Fog('#e8edf2', 60, 160)
-    this.scena.add(new THREE.HemisphereLight('#ffffff', '#b8a68e', 1.4))
+    this.scena.add(this.cielo)
     this.sole.position.set(10, 22, 8)
     this.sole.castShadow = true
     this.sole.shadow.mapSize.set(4096, 4096)
@@ -814,19 +822,155 @@ export class Scena3D {
     this.richiedi()
   }
 
-  /** Render ad alta risoluzione della vista corrente, senza gli aiuti di modifica. */
-  async foto(): Promise<Blob> {
-    const nascosti = [this.evidenzia, this.aiuti, this.anteprima, this.griglia].filter((o): o is NonNullable<typeof o> => !!o && o.visible)
+  /** Inquadratura della vista corrente, per un render "come la vedo". */
+  scattoCorrente(): Scatto {
+    const p = this.camera.position, t = this.controlli.target
+    const a = this.allestimento
+    const interno = !!a && a.pareti.chiusa && a.pareti.punti.length > 2 && p.y < a.pareti.altezza && dentroPoligono([p.x, p.z], a.pareti.punti)
+    return { titolo: 'Vista personalizzata', posizione: [p.x, p.y, p.z], obiettivo: [t.x, t.y, t.z], fov: this.camera.fov, interno, casaDiBambola: this.vista === '3d' && !interno }
+  }
+
+  /**
+   * Rendering realistico di una serie di inquadrature: soffitto con luci calde per le viste
+   * interne, riflessi ambientali, occlusione ambientale, leggero bagliore e cielo.
+   * Restituisce un JPEG per scatto; avanzamento(n, foto) viene chiamato dopo ogni scatto.
+   */
+  async rendering(scatti: Scatto[], larghezza: number, avanzamento: (n: number, foto: Blob) => void, rapporto = RAPPORTO_RENDER): Promise<Blob[]> {
+    const altezza = Math.round(larghezza / rapporto)
+    const nascosti = [this.evidenzia, this.aiuti, this.anteprima, this.griglia, this.etichette].filter((o): o is NonNullable<typeof o> => !!o && o.visible)
     nascosti.forEach((o) => (o.visible = false))
-    const rapporto = this.renderer.getPixelRatio()
-    const larghezza = this.contenitore.clientWidth
-    this.renderer.setPixelRatio(Math.min(4, Math.max(2, 2400 / Math.max(larghezza, 1))))
-    this.disegna()
-    const url = this.renderer.domElement.toDataURL('image/png')
-    this.renderer.setPixelRatio(rapporto)
-    nascosti.forEach((o) => (o.visible = true))
-    this.richiedi()
-    return (await fetch(url)).blob()
+    const rapportoPixel = this.renderer.getPixelRatio()
+    const sfondo = this.scena.background
+    const nebbia = this.scena.fog as THREE.Fog
+    const coloreNebbia = nebbia.color.clone()
+    const [intensitaCielo, intensitaSole] = [this.cielo.intensity, this.sole.intensity]
+
+    // Ambiente: riflessi morbidi da una stanza neutra e cielo sfumato
+    const pmrem = new THREE.PMREMGenerator(this.renderer)
+    const ambiente = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
+    this.scena.environment = ambiente
+    this.scena.environmentIntensity = 0.45
+    const cielo = textureCanvas(256, (c, d) => {
+      const g = c.createLinearGradient(0, 0, 0, d)
+      g.addColorStop(0, '#7fb2e5')
+      g.addColorStop(0.55, '#cfe2f3')
+      g.addColorStop(1, '#eef2f4')
+      c.fillStyle = g
+      c.fillRect(0, 0, d, d)
+    })
+    this.scena.background = cielo
+    nebbia.color.set('#e4ecf2')
+    this.cielo.intensity = 0.55
+    this.sole.intensity = 2.6
+    const soffitto = this.allestimento ? this.costruisciSoffitto(this.allestimento) : null
+    if (soffitto) this.scena.add(soffitto)
+
+    this.renderer.setPixelRatio(1)
+    this.renderer.setSize(larghezza, altezza, false)
+    const camera = new THREE.PerspectiveCamera(55, rapporto, 0.05, 600)
+    const composer = new EffectComposer(this.renderer)
+    composer.setPixelRatio(1)
+    composer.setSize(larghezza, altezza)
+    composer.addPass(new RenderPass(this.scena, camera))
+    const ao = new GTAOPass(this.scena, camera, larghezza, altezza)
+    ao.updateGtaoMaterial({ radius: 0.6, distanceExponent: 1.5, thickness: 1, scale: 1.3, samples: 16 })
+    composer.addPass(ao)
+    // Bagliore solo sulle sorgenti luminose (plafoniere, candele), non sulle superfici chiare
+    composer.addPass(new UnrealBloomPass(new THREE.Vector2(larghezza, altezza), 0.35, 0.4, 3))
+    composer.addPass(new OutputPass())
+
+    const risultati: Blob[] = []
+    try {
+      for (const [i, s] of scatti.entries()) {
+        camera.fov = s.fov
+        camera.position.set(...s.posizione)
+        camera.lookAt(...s.obiettivo)
+        camera.updateProjectionMatrix()
+        if (soffitto) soffitto.visible = s.interno
+        // Dentro la sala luce ambiente più morbida, fuori pieno giorno
+        this.cielo.intensity = s.interno ? 0.45 : 0.55
+        this.scena.environmentIntensity = s.interno ? 0.5 : 0.45
+        this.renderer.toneMappingExposure = s.interno ? 0.82 : 1.05
+        const distanza = camera.position.distanceTo(new THREE.Vector3(...s.obiettivo))
+        nebbia.near = distanza * 2.5 + 20
+        nebbia.far = distanza * 6 + 120
+        this.aggiornaPareti(camera.position, s.casaDiBambola, true)
+        composer.render()
+        const url = this.renderer.domElement.toDataURL('image/jpeg', 0.92)
+        const foto = await (await fetch(url)).blob()
+        risultati.push(foto)
+        avanzamento(i + 1, foto)
+        // Lascia respirare l'interfaccia tra uno scatto e l'altro
+        await new Promise((r) => setTimeout(r, 0))
+        if (this.distrutta) break
+      }
+    } finally {
+      composer.dispose()
+      ao.dispose()
+      pmrem.dispose()
+      ambiente.dispose()
+      cielo.dispose()
+      if (soffitto) {
+        this.scena.remove(soffitto)
+        soffitto.traverse((o) => {
+          if (o instanceof THREE.Mesh) {
+            o.geometry.dispose()
+            ;(o.material as THREE.Material).dispose()
+          }
+        })
+      }
+      this.scena.environment = null
+      this.scena.background = sfondo
+      nebbia.color.copy(coloreNebbia)
+      this.cielo.intensity = intensitaCielo
+      this.renderer.toneMappingExposure = 1.05
+      this.sole.intensity = intensitaSole
+      nascosti.forEach((o) => (o.visible = true))
+      for (const p of this.pareti) p.visible = true
+      this.renderer.setPixelRatio(rapportoPixel)
+      this.ridimensiona()
+      this.richiedi()
+    }
+    return risultati
+  }
+
+  /** Soffitto della sala con plafoniere e luci calde, solo per il rendering. */
+  private costruisciSoffitto(a: Allestimento): THREE.Group | null {
+    const { punti, chiusa, altezza: h } = a.pareti
+    if (!chiusa || punti.length < 3) return null
+    const gruppo = new THREE.Group()
+    const piano = new THREE.Mesh(
+      new THREE.ShapeGeometry(new THREE.Shape(punti.map(([x, z]) => new THREE.Vector2(x, z)))).rotateX(Math.PI / 2).translate(0, h, 0),
+      mat('#f6f3ee', 0.95),
+    )
+    // Il soffitto ripara dal sole: dentro la sala la luce viene dalle plafoniere e dall'ambiente
+    piano.castShadow = true
+    gruppo.add(piano)
+    // Plafoniere su una griglia regolare dentro la sala (al massimo 16 luci)
+    const xs = punti.map((p) => p[0]), zs = punti.map((p) => p[1])
+    const [x0, x1, z0, z1] = [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)]
+    let passo = 3.5
+    const posizioni = () => {
+      const out: [number, number][] = []
+      for (let x = x0 + passo / 2; x < x1; x += passo)
+        for (let z = z0 + passo / 2; z < z1; z += passo) if (dentroPoligono([x, z], punti)) out.push([x, z])
+      return out
+    }
+    let luci = posizioni()
+    while (luci.length > 16) {
+      passo *= 1.2
+      luci = posizioni()
+    }
+    const plafoniera = mat('#fff6e0', 0.4, 0, { emissive: '#ffd59a', emissiveIntensity: 3 })
+    for (const [x, z] of luci) {
+      const l = new THREE.PointLight('#ffd9a8', h * h * 0.55 * (passo / 3.5) ** 2, 0, 2)
+      l.position.set(x, h - 0.6, z)
+      gruppo.add(l)
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.08, 24), plafoniera)
+      m.position.set(x, h - 0.04, z)
+      gruppo.add(m)
+    }
+    return gruppo
   }
 
   distruggi() {
@@ -1247,16 +1391,23 @@ export class Scena3D {
     const distanza = this.camera.position.distanceTo(this.controlli.target)
     nebbia.near = distanza * 1.6
     nebbia.far = distanza * 4 + 40
-    // Le pareti tra la camera e la sala diventano trasparenti, come in una casa delle bambole
-    const cam = this.camera.position
+    this.aggiornaPareti(this.camera.position, this.vista === '3d')
+    this.renderer.render(this.scena, this.camera)
+  }
+
+  /**
+   * Le pareti tra la camera e la sala diventano trasparenti, come in una casa delle bambole
+   * (nel rendering si nascondono del tutto, per non sporcare l'occlusione ambientale).
+   */
+  private aggiornaPareti(cam: THREE.Vector3, casaDiBambola: boolean, nascondi = false) {
     for (const p of this.pareti) {
       const { normale, centro } = p.userData as { normale: THREE.Vector3; centro: THREE.Vector3 }
-      const fuori = this.vista === '3d' && cam.clone().sub(centro).dot(normale) < 0
+      const fuori = casaDiBambola && cam.clone().sub(centro).dot(normale) < 0
+      p.visible = !(fuori && nascondi)
       for (const m of p.material as THREE.MeshStandardMaterial[]) {
-        m.opacity = fuori ? 0.12 : 1
-        m.depthWrite = !fuori
+        m.opacity = fuori && !nascondi ? 0.12 : 1
+        m.depthWrite = !fuori || nascondi
       }
     }
-    this.renderer.render(this.scena, this.camera)
   }
 }
