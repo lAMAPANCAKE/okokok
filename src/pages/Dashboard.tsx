@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth, usePermessi } from '../auth/AuthProvider'
+import { Tessera } from '../components/aree'
+import { AREE } from '../lib/aree'
 import { Avviso, Caricamento, SchedaLink, Statistica, Vuoto } from '../components/ui'
 import { formatData, formatEuro, formatOre, intervalloOre, isoGiorno, oggiIso } from '../lib/format'
 import { supabase } from '../lib/supabase'
@@ -24,6 +26,20 @@ export default function Dashboard() {
       <p className="mb-5 text-sm text-slate-500 capitalize">{formatData(oggiIso(), { weekday: 'long', day: 'numeric', month: 'long' })}</p>
       {isStaff ? <DashboardStaff /> : <DashboardCollaboratore />}
     </>
+  )
+}
+
+/** Riquadri per entrare nelle aree principali, con un numero quando c'è qualcosa da guardare */
+function AccessoRapido({ chiavi, badge = {} }: { chiavi: string[]; badge?: Record<string, { valore: number; allerta?: boolean }> }) {
+  const { isStaff, isAdmin } = usePermessi()
+  const aree = chiavi.map((k) => AREE.find((a) => a.chiave === k)).filter((a) => a && a.visibile({ isStaff, isAdmin }))
+  return (
+    <section aria-label="Accesso rapido" className="grid grid-cols-3 gap-2.5">
+      {aree.map((a) => a && (
+        <Tessera key={a.chiave} to={a.to} icona={a.icona} colore={a.colore} etichetta={a.etichetta}
+          badge={badge[a.chiave]?.valore || undefined} allerta={badge[a.chiave]?.allerta} />
+      ))}
+    </section>
   )
 }
 
@@ -59,6 +75,10 @@ function DashboardCollaboratore() {
 
   return (
     <div className="space-y-6">
+      <AccessoRapido
+        chiavi={['turni', 'disponibilita', 'compensi', 'documenti', 'rimborsi', 'profilo']}
+        badge={{ turni: { valore: daConfermare.length, allerta: true }, documenti: { valore: dati.documentiDaSistemare, allerta: true } }}
+      />
       {dati.documentiDaSistemare > 0 && (
         <Link to="/documenti" className="block rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-200">
           <p className="font-medium text-amber-900">Documenti da sistemare: {dati.documentiDaSistemare}</p>
@@ -248,6 +268,10 @@ function DashboardStaff() {
 
   return (
     <div className="space-y-6">
+      <AccessoRapido
+        chiavi={['eventi', 'personale', 'sopralluoghi', 'preventivi', 'clienti', 'report', 'compensi', 'rimborsi', 'fatture']}
+        badge={{ eventi: { valore: dati.eventi.length }, personale: { valore: scoperti, allerta: true } }}
+      />
       <div className="grid grid-cols-2 gap-3">
         <Statistica etichetta="Eventi oggi" valore={eventiOggi.length} />
         <Statistica etichetta="Impegnati oggi" valore={`${dati.impegnatiOggi}/${dati.totaleCollaboratori}`} />
