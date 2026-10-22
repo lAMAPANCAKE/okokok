@@ -11,6 +11,7 @@ export type TipoArredo =
   | 'pianta' | 'colonna'
   | 'sposi' | 'fila' | 'arco' | 'tappeto' | 'tableau' | 'confettata' | 'photobooth' | 'lanterna'
   | 'gazebo' | 'albero' | 'siepe' | 'giardino' | 'vialetto' | 'porta'
+  | 'palloncini' | 'arco_palloncini' | 'regali' | 'coffee' | 'pianoforte' | 'schermo' | 'leggio' | 'rollup'
 
 export type Pavimento = 'parquet' | 'marmo' | 'cotto' | 'cemento' | 'moquette' | 'prato'
 
@@ -48,7 +49,7 @@ export interface Allestimento {
   oggetti: Oggetto[]
 }
 
-export type CategoriaArredo = 'Tavoli' | 'Sedute' | 'Cerimonia' | 'Servizio' | 'Intrattenimento' | 'Decoro' | 'Esterno'
+export type CategoriaArredo = 'Tavoli' | 'Sedute' | 'Cerimonia' | 'Servizio' | 'Intrattenimento' | 'Aziendale' | 'Decoro' | 'Esterno'
 
 export interface VoceCatalogo {
   tipo: TipoArredo
@@ -72,7 +73,7 @@ export const CATALOGO: VoceCatalogo[] = [
   { tipo: 'sedia', nome: 'Sedia', categoria: 'Sedute', dettaglio: 'chiavarina', posti: 1 },
   { tipo: 'sgabello', nome: 'Sgabello', categoria: 'Sedute', dettaglio: 'da bar', posti: 1 },
   { tipo: 'lounge', nome: 'Divanetto lounge', categoria: 'Sedute', dettaglio: '3 posti, 200×80', posti: 3 },
-  { tipo: 'fila', nome: 'Fila di sedie', categoria: 'Cerimonia', dettaglio: 'per rito civile o cerimonia', sedie: { iniziali: 6, max: 16 } },
+  { tipo: 'fila', nome: 'Fila di sedie', categoria: 'Cerimonia', dettaglio: 'per cerimonia o platea', sedie: { iniziali: 6, max: 16 } },
   { tipo: 'arco', nome: 'Arco floreale', categoria: 'Cerimonia', dettaglio: '240×260, fiori e verde' },
   { tipo: 'tappeto', nome: 'Navata / tappeto', categoria: 'Cerimonia', dettaglio: 'larga 120 cm, lunghezza a scelta', lunghezza: { iniziale: 10, min: 2, max: 40 } },
   { tipo: 'lanterna', nome: 'Lanterna', categoria: 'Cerimonia', dettaglio: 'con candela, a terra' },
@@ -81,13 +82,21 @@ export const CATALOGO: VoceCatalogo[] = [
   { tipo: 'torta', nome: 'Tavolo torta', categoria: 'Servizio', dettaglio: 'Ø80 con torta' },
   { tipo: 'confettata', nome: 'Confettata', categoria: 'Servizio', dettaglio: 'tavolo Ø120 con vasi di confetti' },
   { tipo: 'tableau', nome: 'Tableau de mariage', categoria: 'Servizio', dettaglio: 'pannello su cavalletto' },
+  { tipo: 'coffee', nome: 'Coffee station', categoria: 'Servizio', dettaglio: 'thermos, tazze e pasticceria', lunghezza: { iniziale: 2.4, min: 1.2, max: 10 } },
+  { tipo: 'regali', nome: 'Tavolo regali', categoria: 'Servizio', dettaglio: '120×60 con pacchi' },
   { tipo: 'palco', nome: 'Palco / pedana', categoria: 'Intrattenimento', dettaglio: '400×300, alto 40', lunghezza: { iniziale: 4, min: 2, max: 16 } },
   { tipo: 'pista', nome: 'Pista da ballo', categoria: 'Intrattenimento', dettaglio: '500×500', lunghezza: { iniziale: 5, min: 2, max: 16 } },
   { tipo: 'dj', nome: 'Consolle DJ', categoria: 'Intrattenimento', dettaglio: '160×70' },
   { tipo: 'cassa', nome: 'Cassa audio', categoria: 'Intrattenimento', dettaglio: 'su stativo' },
+  { tipo: 'pianoforte', nome: 'Pianoforte a coda', categoria: 'Intrattenimento', dettaglio: 'con panchetta' },
+  { tipo: 'schermo', nome: 'Schermo proiezione', categoria: 'Aziendale', dettaglio: '16:9 su treppiede, base a scelta', lunghezza: { iniziale: 3, min: 1.5, max: 8 } },
+  { tipo: 'leggio', nome: 'Leggio / podio', categoria: 'Aziendale', dettaglio: 'con microfono' },
+  { tipo: 'rollup', nome: 'Roll-up', categoria: 'Aziendale', dettaglio: 'banner 85×200 con il logo' },
   { tipo: 'photobooth', nome: 'Photo booth', categoria: 'Intrattenimento', dettaglio: 'parete fiorita 240×240' },
   { tipo: 'pianta', nome: 'Pianta in vaso', categoria: 'Decoro', dettaglio: 'in vaso, alta 160' },
   { tipo: 'colonna', nome: 'Colonna / pilastro', categoria: 'Decoro', dettaglio: '40×40, alta come le pareti' },
+  { tipo: 'palloncini', nome: 'Palloncini', categoria: 'Decoro', dettaglio: 'composizione da 7, con peso' },
+  { tipo: 'arco_palloncini', nome: 'Arco di palloncini', categoria: 'Decoro', dettaglio: 'per ingresso o torta, larghezza a scelta', lunghezza: { iniziale: 3, min: 1.5, max: 8 } },
   { tipo: 'porta', nome: 'Portone / vetrata', categoria: 'Decoro', dettaglio: '220×280, da appoggiare alla parete' },
   { tipo: 'gazebo', nome: 'Gazebo', categoria: 'Esterno', dettaglio: 'telo bianco, lato a scelta', lunghezza: { iniziale: 6, min: 3, max: 12 } },
   { tipo: 'giardino', nome: 'Prato', categoria: 'Esterno', dettaglio: 'area verde, larghezza a scelta', lunghezza: { iniziale: 20, min: 4, max: 80 } },
@@ -221,7 +230,10 @@ export function raggioIngombro(o: Pick<Oggetto, 'tipo' | 'lunghezza' | 'sedie'>)
   if (o.tipo === 'arco' || o.tipo === 'photobooth') return 1.3
   if (o.tipo === 'albero') return 1.6
   if (o.tipo === 'porta') return 1.2
-  if (o.tipo === 'lanterna') return 0.25
+  if (o.tipo === 'lanterna' || o.tipo === 'rollup') return 0.35
+  if (o.tipo === 'pianoforte') return 1.3
+  if (o.tipo === 'leggio' || o.tipo === 'palloncini') return 0.45
+  if (o.tipo === 'regali') return 0.75
   if (o.tipo === 'palco' || o.tipo === 'pista') return l * 0.65
   return fissi[o.tipo] ?? l / 2 + 0.2
 }

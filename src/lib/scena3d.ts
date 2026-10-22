@@ -23,6 +23,7 @@ const PASSO_GRIGLIA = 0.25
 // ---------------------------------------------------------------------------
 type Materiale = 'tovaglia' | 'oro' | 'cuscino' | 'legno' | 'legnoScuro' | 'nero' | 'metallo' | 'piatto' | 'foglie' | 'vaso' | 'fiori' | 'intonaco' | 'torta' | 'tessuto' | 'pista' | 'palco'
   | 'prato' | 'ghiaia' | 'telo' | 'vetro' | 'candela' | 'corteccia' | 'siepe' | 'fioriBianchi'
+  | 'laccato' | 'schermo' | 'rollup' | 'blu' | 'giallo'
 
 const mat = (colore: string, roughness = 0.8, metalness = 0, extra: THREE.MeshStandardMaterialParameters = {}) =>
   new THREE.MeshStandardMaterial({ color: colore, roughness, metalness, ...extra })
@@ -435,6 +436,94 @@ function costruisciParti(o: Oggetto, altezzaPareti: number): Parte[] {
     }
     case 'vialetto':
       return [[uvInMetri(scatola(lunghezza, 0.03, 2, 0, 0.015, 0), lunghezza, 2), 'ghiaia']]
+    case 'palloncini': {
+      // Sette palloncini a grappolo con i fili verso il peso a terra
+      const colori: Materiale[] = ['fiori', 'oro', 'fioriBianchi', 'blu', 'fiori', 'giallo', 'fioriBianchi']
+      const parti: Parte[] = [[cilindro(0.08, 0.1, 0.12, 0, 0.06, 0, 12), 'oro']]
+      const fili: THREE.BufferGeometry[] = []
+      colori.forEach((m, i) => {
+        const a = i * 2.4, r = i ? 0.28 : 0
+        const x = Math.cos(a) * r, z = Math.sin(a) * r, y = 1.75 + (i % 3) * 0.22
+        parti.push([pezzo(new THREE.SphereGeometry(0.17, 16, 12).scale(1, 1.18, 1), x, y, z), m])
+        const filo = new THREE.Vector3(x, y - 0.2, z)
+        const g = new THREE.CylinderGeometry(0.003, 0.003, filo.length(), 4).translate(0, filo.length() / 2, 0)
+        g.applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), filo.clone().normalize())))
+        fili.push(g.translate(0, 0.1, 0))
+      })
+      return [...parti, [unisci(fili), 'fioriBianchi']]
+    }
+    case 'arco_palloncini': {
+      // Arco a mezzo ellisse alto 2,4 m: palloncini a gruppi di tre colori
+      const r = lunghezza / 2
+      const n = Math.max(12, Math.round((Math.PI * (r + 2.4)) / 2 / 0.22))
+      const perColore: Record<string, THREE.BufferGeometry[]> = { fiori: [], fioriBianchi: [], oro: [] }
+      const chiavi = Object.keys(perColore)
+      for (let i = 0; i <= n; i++) {
+        const a = (i / n) * Math.PI
+        const x = Math.cos(a) * r, y = 0.15 + Math.sin(a) * 2.25
+        perColore[chiavi[i % 3]].push(pezzo(new THREE.SphereGeometry(0.16, 12, 10), x, y, 0.06 * ((i % 2) * 2 - 1)))
+        perColore[chiavi[(i + 1) % 3]].push(pezzo(new THREE.SphereGeometry(0.12, 10, 8), x * 0.97, y + 0.06, -0.12))
+      }
+      return chiavi.map((m) => [unisci(perColore[m]), m as Materiale])
+    }
+    case 'regali': {
+      const pacchi: Record<string, THREE.BufferGeometry[]> = { fiori: [], blu: [], oro: [] }
+      const pos: [number, number, number, number][] = [[-0.38, 0.12, -0.1, 0.24], [-0.1, 0.09, 0.08, 0.18], [0.18, 0.14, -0.08, 0.28], [0.42, 0.08, 0.1, 0.16], [0.05, 0.07, -0.18, 0.14], [0.18, 0.31, -0.08, 0.16]]
+      pos.forEach(([x, h, z, l], i) => pacchi[Object.keys(pacchi)[i % 3]].push(scatola(l, h * 2, l, x, 0.77 + h, z)))
+      return [[scatola(1.26, 0.76, 0.66, 0, 0.38, 0), 'tovaglia'], ...Object.entries(pacchi).map(([m, g]) => [unisci(g), m as Materiale] as Parte)]
+    }
+    case 'coffee': {
+      const thermos: THREE.BufferGeometry[] = [], tazze: THREE.BufferGeometry[] = [], dolci: THREE.BufferGeometry[] = []
+      const n = Math.max(1, Math.floor(lunghezza / 0.8))
+      for (let i = 0; i < n; i++) {
+        const x = -lunghezza / 2 + ((i + 0.5) * lunghezza) / n
+        thermos.push(cilindro(0.08, 0.08, 0.34, x - 0.18, 0.95, -0.2, 14), cilindro(0.03, 0.03, 0.06, x - 0.18, 1.15, -0.2, 8))
+        for (let k = 0; k < 6; k++) tazze.push(cilindro(0.04, 0.035, 0.07, x + 0.05 + (k % 3) * 0.1, 0.815, -0.22 + Math.floor(k / 3) * 0.1, 10))
+        dolci.push(cilindro(0.17, 0.17, 0.02, x + 0.1, 0.79, 0.15, 20))
+        for (let k = 0; k < 5; k++) dolci.push(pezzo(new THREE.SphereGeometry(0.04, 8, 6).scale(1.4, 0.7, 1), x + 0.1 + Math.cos(k * 1.3) * 0.09, 0.82, 0.15 + Math.sin(k * 1.3) * 0.09))
+      }
+      return [[scatola(lunghezza, 0.78, 0.8, 0, 0.39, 0), 'tovaglia'], [unisci(thermos), 'metallo'], [unisci(tazze), 'piatto'], [unisci(dolci), 'torta']]
+    }
+    case 'pianoforte': {
+      // Cassa a coda: lato dritto a sinistra, curva a destra; tastiera verso −Z
+      const forma = new THREE.Shape()
+      forma.moveTo(-0.75, 0)
+      forma.lineTo(0.75, 0)
+      forma.lineTo(0.75, 0.55)
+      forma.bezierCurveTo(0.75, 1.0, 0.1, 1.0, 0.0, 1.5)
+      forma.bezierCurveTo(-0.15, 1.85, -0.5, 1.9, -0.75, 1.9)
+      forma.lineTo(-0.75, 0)
+      const cassa = new THREE.ExtrudeGeometry(forma, { depth: 0.3, bevelEnabled: false, curveSegments: 16 }).rotateX(Math.PI / 2).translate(0, 1.0, -0.55)
+      // Coperchio aperto: incernierato sul lato dritto (x = −0,75) e sollevato di 40°
+      const coperchio = new THREE.ExtrudeGeometry(forma, { depth: 0.02, bevelEnabled: false, curveSegments: 16 }).rotateX(Math.PI / 2)
+      coperchio.translate(0.75, 0, 0).rotateZ(0.7).translate(-0.75, 1.02, -0.55)
+      return [
+        [unisci([cassa, coperchio, cilindro(0.05, 0.04, 0.7, -0.65, 0.35, -0.45, 10), cilindro(0.05, 0.04, 0.7, 0.65, 0.35, -0.45, 10), cilindro(0.05, 0.04, 0.7, -0.5, 0.35, 1.2, 10), scatola(0.9, 0.06, 0.35, 0, 0.47, -0.95), ...[-0.4, 0.4].map((x) => cilindro(0.03, 0.03, 0.45, x, 0.225, -0.95, 8))]), 'laccato'],
+        [scatola(1.4, 0.04, 0.16, 0, 0.74, -0.62), 'piatto'],
+      ]
+    }
+    case 'schermo': {
+      const h = (lunghezza * 9) / 16
+      const base = 0.9
+      return [
+        [scatola(lunghezza, h, 0.03, 0, base + h / 2, 0), 'schermo'],
+        [unisci([
+          scatola(lunghezza + 0.08, 0.06, 0.05, 0, base + h + 0.03, -0.01), scatola(lunghezza + 0.08, 0.06, 0.05, 0, base - 0.03, -0.01),
+          ...[-lunghezza / 2 - 0.04, lunghezza / 2 + 0.04].flatMap((x) => [cilindro(0.025, 0.025, base + h + 0.1, x, (base + h + 0.1) / 2, 0.02, 8), scatola(0.06, 0.03, 0.7, x, 0.015, 0.02)]),
+        ]), 'nero'],
+      ]
+    }
+    case 'leggio':
+      return [
+        [unisci([scatola(0.6, 1.0, 0.42, 0, 0.5, 0), pezzo(new THREE.BoxGeometry(0.66, 0.04, 0.5), 0, 1.05, 0.02, 0, -0.25, 0)]), 'legnoScuro'],
+        [unisci([pezzo(new THREE.CylinderGeometry(0.006, 0.006, 0.35, 6), 0.18, 1.2, 0.05, 0, -0.5, 0), pezzo(new THREE.SphereGeometry(0.025, 10, 8), 0.18, 1.36, 0.13)]), 'nero'],
+        [scatola(0.4, 0.2, 0.01, 0, 0.62, -0.215), 'oro'],
+      ]
+    case 'rollup':
+      return [
+        [scatola(0.85, 2.0, 0.02, 0, 1.08, 0), 'rollup'],
+        [unisci([scatola(0.9, 0.08, 0.2, 0, 0.04, 0.02), cilindro(0.012, 0.012, 2.1, 0, 1.05, 0.03, 6)]), 'metallo'],
+      ]
   }
 }
 
@@ -595,6 +684,26 @@ export class Scena3D {
       corteccia: mat('#6b4a32', 0.9),
       siepe: mat('#2f5e2c', 1, 0, { map: textureCanvas(128, (c, d) => { c.fillStyle = '#2f5e2c'; c.fillRect(0, 0, d, d); rumore(c, d, 3000, ['#24501f', '#3f7a3a', '#4a8a42'], 4) }) }),
       fioriBianchi: mat('#fbf7f0', 0.7, 0, { flatShading: true }),
+      laccato: mat('#0d0f12', 0.12, 0.2),
+      schermo: mat('#eef4fb', 0.5, 0, { emissive: '#dbeafe', emissiveIntensity: 0.35 }),
+      rollup: new THREE.MeshStandardMaterial({
+        roughness: 0.6,
+        map: textureCanvas(256, (c, d) => {
+          // Banner generico: fascia colorata, spazio per il logo e righe di testo
+          c.fillStyle = '#0f172a'
+          c.fillRect(0, 0, d, d)
+          c.fillStyle = '#0ea5e9'
+          c.fillRect(0, d * 0.62, d, d * 0.38)
+          c.fillStyle = '#ffffff'
+          c.beginPath()
+          c.arc(d / 2, d * 0.24, d * 0.12, 0, Math.PI * 2)
+          c.fill()
+          c.fillRect(d * 0.2, d * 0.44, d * 0.6, d * 0.04)
+          c.fillRect(d * 0.28, d * 0.52, d * 0.44, d * 0.025)
+        }),
+      }),
+      blu: mat('#7cc4ea', 0.5),
+      giallo: mat('#f5cf5b', 0.5),
     }
     for (const m of [this.materiali.pista, this.materiali.prato, this.materiali.ghiaia, this.materiali.siepe]) m.map!.repeat.set(0.5, 0.5)
     this.materiali.siepe.color.set('#ffffff')
