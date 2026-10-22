@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { Tessera } from '../../components/aree'
 import { FotoProfilo } from '../../components/ModuloProfilo'
 import { Avviso, BadgeEvento, BadgeTurno, Bottone, Campo, Caricamento, Input, Intestazione, Scheda, Select, Vuoto } from '../../components/ui'
 import { durataOre, formatData, formatEuro, formatOra, formatOre, intervalloOre, nomeCompleto } from '../../lib/format'
@@ -22,6 +23,10 @@ interface DatiEvento {
   medie: Map<string, MediaValutazioni>
   valutazioni: Map<string, Valutazione>
   report: ReportEvento | null
+  /** sopralluogo collegato con la sala 3D, per aprirla dall'evento */
+  sala3d: string | null
+  haOrdine: boolean
+  carico: { caricate: number; totale: number } | null
 }
 
 export default function EventoDettaglio() {
@@ -32,7 +37,7 @@ export default function EventoDettaglio() {
 
   const { dati, errore: erroreCaricamento, caricamento, ricarica } = useDati<DatiEvento>(async () => {
     const evento = oppureErrore(await supabase.from('eventi').select('*').eq('id', id).single()) as Evento
-    const [cop, turni, roster, altri, indisponibili, medie, valutazioni, report] = await Promise.all([
+    const [cop, turni, roster, altri, indisponibili, medie, valutazioni, report, sopralluogo, ordine, carico] = await Promise.all([
       supabase.from('eventi_copertura').select('*').eq('evento_id', id).maybeSingle(),
       supabase.from('turni').select('*').eq('evento_id', id).order('ora_inizio'),
       supabase.from('profiles').select('*').eq('attivo', true).order('cognome').order('nome'),
@@ -41,7 +46,12 @@ export default function EventoDettaglio() {
       supabase.from('valutazioni_medie').select('*'),
       supabase.from('valutazioni').select('*').eq('evento_id', id),
       supabase.from('report_eventi').select('*').eq('evento_id', id).maybeSingle(),
+      supabase.from('sopralluoghi').select('id').eq('evento_id', id).not('allestimento', 'is', null).limit(1),
+      supabase.from('ordini_servizio').select('evento_id', { count: 'exact', head: true }).eq('evento_id', id),
+      supabase.from('liste_carico').select('voci').eq('evento_id', id).maybeSingle(),
     ])
+    const voci = ((oppureErrore(carico) as { voci: { caricato: boolean }[] } | null)?.voci ?? [])
+    if (ordine.error) throw ordine.error
     return {
       evento,
       copertura: oppureErrore(cop) as Copertura | undefined,
@@ -52,6 +62,9 @@ export default function EventoDettaglio() {
       medie: new Map((oppureErrore(medie) as MediaValutazioni[]).map((m) => [m.collaboratore_id, m])),
       valutazioni: new Map((oppureErrore(valutazioni) as Valutazione[]).map((v) => [v.collaboratore_id, v])),
       report: oppureErrore(report) as ReportEvento | null,
+      sala3d: (oppureErrore(sopralluogo) as { id: string }[])[0]?.id ?? null,
+      haOrdine: (ordine.count ?? 0) > 0,
+      carico: voci.length ? { caricate: voci.filter((v) => v.caricato).length, totale: voci.length } : null,
     }
   }, [id])
 
@@ -83,20 +96,9 @@ export default function EventoDettaglio() {
         sottotitolo={`${formatData(evento.data, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} ${intervalloOre(evento.ora_inizio, evento.ora_fine) && '· ' + intervalloOre(evento.ora_inizio, evento.ora_fine)}`}
         indietro="/eventi"
         azione={
-          <div className="flex flex-wrap justify-end gap-2">
-            <Link to={`/eventi/${id}/gruppo`} className="inline-flex min-h-11 items-center rounded-xl bg-brand-600 px-3 text-sm font-medium text-white">
-              Gruppo di lavoro
-            </Link>
-            <Link to={`/eventi/${id}/ordine`} className="inline-flex min-h-11 items-center rounded-xl bg-slate-900 px-3 text-sm font-medium text-white">
-              Ordine di servizio
-            </Link>
-            <Link to={`/eventi/${id}/carico`} className="inline-flex min-h-11 items-center rounded-xl bg-slate-900 px-3 text-sm font-medium text-white">
-              Lista di carico
-            </Link>
-            <Link to={`/eventi/${id}/modifica`} className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-medium text-slate-700 ring-1 ring-slate-300">
-              Modifica
-            </Link>
-          </div>
+          <Link to={`/eventi/${id}/modifica`} className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-medium text-slate-700 ring-1 ring-slate-300">
+            Modifica
+          </Link>
         }
       />
 
@@ -107,6 +109,20 @@ export default function EventoDettaglio() {
         {evento.note && <p className="whitespace-pre-line"><span className="text-slate-500">Note:</span> {evento.note}</p>}
         <IndicatoreCopertura c={dati.copertura} />
       </Scheda>
+
+      <section aria-label="Strumenti dell'evento" className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        <Tessera to={`/eventi/${id}/gruppo`} icona="gruppo" colore="emerald" etichetta="Gruppo di lavoro" descrizione="Squadra, ritrovo e divisa"
+          badge={dati.copertura?.richiesti ? `${dati.copertura.confermati}/${dati.copertura.richiesti}` : undefined} allerta={(dati.copertura?.mancanti ?? 0) > 0} />
+        <Tessera to={`/eventi/${id}/ordine`} icona="ordine" colore="indigo" etichetta="Ordine di servizio" descrizione="Scaletta, menù e allergeni"
+          badge={dati.haOrdine ? undefined : 'da fare'} />
+        <Tessera to={`/eventi/${id}/carico`} icona="carico" colore="amber" etichetta="Lista di carico" descrizione="Cosa caricare, per reparto"
+          badge={dati.carico ? `${dati.carico.caricate}/${dati.carico.totale}` : 'da fare'} />
+        {dati.sala3d ? (
+          <Tessera to={`/sopralluoghi/${dati.sala3d}/allestimento`} icona="sala3d" colore="orange" etichetta="Sala 3D" descrizione="Allestimento e rendering" />
+        ) : (
+          <Tessera to="/sopralluoghi/nuovo" icona="sopralluoghi" colore="orange" etichetta="Sopralluogo" descrizione="Nessuna sala 3D: creane uno" />
+        )}
+      </section>
 
       {errore && <div className="mb-4"><Avviso>{errore}</Avviso></div>}
 
