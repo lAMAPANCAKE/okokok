@@ -19,6 +19,8 @@ PWA mobile-first (React + Vite + TypeScript + Tailwind) con backend Supabase (Po
 | PDF del preventivo generato sul telefono, tasso di conversione per cliente e totale | — | ✓ | ✓ |
 | Da preventivo accettato a evento (con fabbisogno di personale già calcolato) | — | ✓ | ✓ |
 | Sopralluoghi: checklist in loco, misure, foto e planimetrie (bucket privato) | — | ✓ | ✓ |
+| Ordine di servizio dell’evento: scaletta (anche da modelli), menù con i 14 allergeni UE, intolleranze, personale, checklist di montaggio, dress code, PDF | lettura (turno confermato) | ✓ | ✓ |
+| Preventivo dal sopralluogo: personale calcolato (camerieri 1 ogni 10–12 coperti, baristi, cuochi…), arredi del 3D, voci delle zone, ultimi prezzi usati | — | ✓ | ✓ |
 | Zone del sopralluogo (bar, sala, cucina, back…): foto della location vuota, voci guidate e dettatura vocale, rendering con ChatGPT, prima/dopo e PDF per il cliente, funziona anche senza rete | — | ✓ | ✓ |
 | Allestimento 3D del sopralluogo: sala da misure o planimetria, foto sulle pareti, tavoli/sedie/buffet/palco, coperti e render PNG | — | ✓ | ✓ |
 | Dati aziendali e condizioni stampati sui preventivi | — | — | ✓ |
@@ -43,8 +45,26 @@ Da configurare sul progetto Supabase: email con Brevo e funzione inviti (sezione
 
 **Preventivi.** Ogni voce ha prezzo di vendita e costo interno; il margine si vede solo nell’app. Dopo l’invio il preventivo è bloccato (il cliente ha quella versione): per cambiarlo si riporta in bozza. Quando passa a “inviato” l’azienda va “in trattativa”, quando è “accettato” diventa “cliente attivo”. Prima di inviare il primo PDF compila **Altro → Impostazioni → Dati aziendali** (ragione sociale, P. IVA, condizioni). Le email (inviti, notifiche) richiedono la configurazione di Brevo (sezione 2).
 
+**Ordine di servizio.** Nella scheda evento → *Ordine di servizio*:
+- **scaletta**, partendo anche da un modello (matrimonio, cena di gala, aperitivo, convention) calcolato sull’ora d’inizio;
+- **menù** per portata, con i 14 allergeni del Reg. UE 1169/2011 da toccare per ogni piatto;
+- **intolleranze e richieste** degli ospiti, con il totale dei menù speciali;
+- **personale** dai turni;
+- **checklist di montaggio**, importabile dalle zone del sopralluogo collegato e da spuntare in evento (si salva subito);
+- **dress code e note**, anche dettate.
+
+Il PDF si stampa o si manda allo staff. I collaboratori con turno confermato lo aprono da *I miei turni* in sola lettura (protetto dalla RLS). Serve la migrazione `20261022000003_ordine_servizio.sql`.
+
+**Preventivo dal sopralluogo.** Da *Crea preventivo* nella scheda del sopralluogo, o nel preventivo in bozza collegato, *✨ Proponi voci dal sopralluogo* calcola:
+- **personale**: camerieri secondo la regola in *Impostazioni* (predefinita 1 ogni 10–12 coperti, con la forbice mostrata), responsabile di sala, 2 baristi per bancone, 1 addetto per buffet, cuochi 1 ogni 50 coperti, lavapiatti 1 ogni 100, sbarazzo 1 ogni 80;
+- **arredi** contati nell’allestimento 3D, sedie e tovagliato per coperto;
+- **voci delle zone**.
+
+I coperti vengono dal 3D o, in mancanza, dagli ospiti del preventivo. Si spuntano le voci da aggiungere; dove esiste, si riprende l’ultimo prezzo usato per la stessa voce. Il resto resta modificabile come sempre.
+
 **Zone e rendering con ChatGPT.** Nella scheda del sopralluogo, *+ Zona* crea una zona (bar, sala, buffet, sbarazzo, back/separé, cucina, ingresso, esterno o altra). Nella zona:
 1. si fotografa la location com’è, anche vuota (le foto vengono ridotte prima dell’invio);
+   Nella zona c’è una guida allo scatto per tipo di zona (inquadratura, luce, niente grandangolo).
 2. si sceglie cosa allestire toccando le voci guidate, si detta o scrive la descrizione (🎤 *Detta*: riconoscimento vocale del browser, ottimo su Chrome Android; altrove si usa il microfono della tastiera), si indicano stile, giorno/sera e colori; le *note operative* restano interne;
 3. *✨ Genera con ChatGPT* prepara l’istruzione (modificabile), la copia e condivide foto e istruzione con l’app ChatGPT; su computer offre *Copia istruzione*, *Scarica la foto* e *Apri ChatGPT*;
 4. l’immagine creata da ChatGPT si salva e si ricarica con *Carica il risultato*: tutte le versioni restano, con il confronto prima/dopo e la stella sul rendering da mostrare al cliente.
@@ -104,7 +124,7 @@ Altri comandi: `npm run build` (build di produzione), `npm run preview` (antepri
 
 1. Crea un progetto su https://supabase.com scegliendo la regione **Central EU (Frankfurt)** (dati in UE, GDPR).
 2. **Applica le migrazioni**, in ordine:
-   - *Da browser*: SQL Editor → incolla ed esegui `supabase/migrations/20261018000001_fase1_schema.sql`, poi `…000002_fase1_sicurezza.sql`, `…000003_fase2.sql`, `…000004_fase3.sql`, `…000005_fase4.sql`, `20261019000001_fatture.sql`, `20261022000001_allestimento_3d.sql` e `20261022000002_zone_sopralluogo.sql`.
+   - *Da browser*: SQL Editor → incolla ed esegui `supabase/migrations/20261018000001_fase1_schema.sql`, poi `…000002_fase1_sicurezza.sql`, `…000003_fase2.sql`, `…000004_fase3.sql`, `…000005_fase4.sql`, `20261019000001_fatture.sql`, `20261022000001_allestimento_3d.sql`, `20261022000002_zone_sopralluogo.sql` e `20261022000003_ordine_servizio.sql`.
    - *Oppure da terminale* (CLI senza installazione):
      ```bash
      npx supabase login

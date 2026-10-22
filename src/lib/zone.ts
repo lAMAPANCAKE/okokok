@@ -81,3 +81,25 @@ export function istruzioneRendering(z: Pick<ZonaSopralluogo, 'nome' | 'tipo' | '
   )
   return righe.join('\n')
 }
+
+/** Consigli per fotografare la zona: foto migliori danno rendering più fedeli. */
+export const CONSIGLI_SCATTO_GENERALI = [
+  'Telefono in orizzontale, all’altezza degli occhi, tenuto dritto (le linee verticali delle pareti devono restare verticali).',
+  'Mettiti in un angolo o sulla porta, così entrano in foto pavimento, pareti e soffitto.',
+  'Usa la luce del giorno: accendi le luci, apri le tende, niente flash e niente controluce verso le finestre.',
+  'Niente zoom e niente grandangolo 0,5×: l’obiettivo normale deforma meno lo spazio.',
+  'Togli persone, scatoloni e oggetti che non devono restare.',
+  'Due o tre scatti da punti diversi: sceglierai quello che rende meglio.',
+]
+
+export const CONSIGLI_SCATTO: Record<TipoZona, string> = {
+  bar: 'Inquadra tutta la parete dove andrà il bancone e lo spazio davanti per gli ospiti; fotografa prese e attacchi dell’acqua a parte.',
+  sala: 'Scatta dall’ingresso verso il fondo e poi in diagonale da un angolo: devono vedersi tutto il pavimento e il soffitto.',
+  buffet: 'Riprendi la parete o lo spazio del buffet di fronte, con un paio di metri di pavimento davanti per il passaggio.',
+  sbarazzo: 'Inquadra l’area per intero, compresi passaggi e porte verso cucina e sala.',
+  back: 'Fotografa lo spazio da separare e da dove lo vedrebbero gli ospiti: così il rendering mostra i separé dal lato giusto.',
+  cucina: 'Riprendi tutta l’area di lavoro: pareti con prese, attacchi acqua e scarichi, finestre e uscite di sicurezza.',
+  ingresso: 'Scatta da dove arrivano gli ospiti, guardando verso l’interno.',
+  esterno: 'Fotografa con il sole alle spalle; includi alberi, vialetti e la facciata se fanno da sfondo.',
+  altro: 'Inquadra tutta l’area da allestire con un po’ di spazio intorno.',
+}

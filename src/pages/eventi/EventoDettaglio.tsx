@@ -83,9 +83,14 @@ export default function EventoDettaglio() {
         sottotitolo={`${formatData(evento.data, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} ${intervalloOre(evento.ora_inizio, evento.ora_fine) && '· ' + intervalloOre(evento.ora_inizio, evento.ora_fine)}`}
         indietro="/eventi"
         azione={
-          <Link to={`/eventi/${id}/modifica`} className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-medium text-slate-700 ring-1 ring-slate-300">
-            Modifica
-          </Link>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Link to={`/eventi/${id}/ordine`} className="inline-flex min-h-11 items-center rounded-xl bg-slate-900 px-3 text-sm font-medium text-white">
+              Ordine di servizio
+            </Link>
+            <Link to={`/eventi/${id}/modifica`} className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-medium text-slate-700 ring-1 ring-slate-300">
+              Modifica
+            </Link>
+          </div>
         }
       />
 
