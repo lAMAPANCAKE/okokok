@@ -87,6 +87,9 @@ export default function EventoDettaglio() {
             <Link to={`/eventi/${id}/ordine`} className="inline-flex min-h-11 items-center rounded-xl bg-slate-900 px-3 text-sm font-medium text-white">
               Ordine di servizio
             </Link>
+            <Link to={`/eventi/${id}/carico`} className="inline-flex min-h-11 items-center rounded-xl bg-slate-900 px-3 text-sm font-medium text-white">
+              Lista di carico
+            </Link>
             <Link to={`/eventi/${id}/modifica`} className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-medium text-slate-700 ring-1 ring-slate-300">
               Modifica
             </Link>
