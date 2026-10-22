@@ -216,6 +216,9 @@ az.stato_pipeline === 'da_contattare' && az.responsabile_id === R ? pass('aziend
 ;(await come(C1, `select count(*)::int n from aziende`)).rows[0].n === 0 ? pass('il collaboratore non vede il CRM') : fail('collaboratore vede aziende')
 const so = (await come(R, `insert into sopralluoghi (azienda_id, titolo, checklist) values ('${az.id}', 'Villa', '[{"chiave":"accessi","stato":"ok"}]') returning id`)).rows[0].id
 ;(await come(C1, `select count(*)::int n from sopralluoghi`)).rows[0].n === 0 ? pass('il collaboratore non vede i sopralluoghi') : fail('collaboratore vede sopralluoghi')
+await come(R, `update sopralluoghi set allestimento = '{"versione":1,"oggetti":[{"id":"t1","tipo":"tondo_150","x":0,"z":0,"rot":0,"sedie":8}]}' where id = '${so}'`)
+;(await come(R, `select allestimento->'oggetti'->0->>'tipo' t from sopralluoghi where id = '${so}'`)).rows[0].t === 'tondo_150' ? pass('allestimento 3D salvato sul sopralluogo') : fail('allestimento 3D')
+await deveFallire(R, `update sopralluoghi set allestimento = '[]' where id = '${so}'`, 'allestimento 3D che non è un oggetto')
 await come(R, `insert into storage.objects (bucket_id, name) values ('sopralluoghi', '${so}/foto.jpg')`)
 await deveFallire(C1, `insert into storage.objects (bucket_id, name) values ('sopralluoghi', '${so}/x.jpg')`, 'collaboratore carica foto di sopralluogo')
 ;(await come(C1, `select count(*)::int n from storage.objects where bucket_id = 'sopralluoghi'`)).rows[0].n === 0 ? pass('foto sopralluoghi riservate allo staff') : fail('foto sopralluoghi visibili')

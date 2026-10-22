@@ -220,6 +220,12 @@ export default function SopralluogoDettaglio() {
         >
           Crea preventivo
         </Link>
+        <Link
+          to={`/sopralluoghi/${id}/allestimento`}
+          className={`inline-flex min-h-10 items-center rounded-xl px-3 text-sm font-medium ring-1 ring-slate-300 ${modificato ? 'pointer-events-none opacity-50' : ''}`}
+        >
+          Allestimento 3D
+        </Link>
         {form.indirizzo && (
           <a href={`https://maps.google.com/?q=${encodeURIComponent(form.indirizzo)}`} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center rounded-xl px-3 text-sm font-medium ring-1 ring-slate-300">
             Mappa
@@ -316,7 +322,7 @@ export default function SopralluogoDettaglio() {
           <input ref={inputPlanimetria} type="file" accept="image/*,application/pdf" hidden onChange={(e) => void carica(e.target.files, 'planimetria')} />
         </div>
         {dati.file.length === 0 ? (
-          <p className="text-sm text-slate-500">Scatta le foto direttamente dal telefono: ingressi, sale, cucina, punti critici.</p>
+          <p className="text-sm text-slate-500">Scatta le foto direttamente dal telefono: ingressi, sale, cucina, punti critici. Una foto frontale per parete si può applicare alle pareti dell’allestimento 3D.</p>
         ) : (
           <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
             {dati.file.map((f) => {
