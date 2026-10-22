@@ -257,6 +257,12 @@ export function postoLibero(oggetti: Oggetto[], nuovo: Pick<Oggetto, 'tipo' | 'l
 /** Superfici calpestabili: gli altri arredi si appoggiano sopra. */
 export const A_TERRA = new Set<TipoArredo>(['giardino', 'vialetto', 'tappeto', 'pista'])
 
+/** Mezza profondità (m) degli arredi a lunghezza variabile, sedie comprese. */
+const PROFONDITA: Partial<Record<TipoArredo, (l: number) => number>> = {
+  giardino: (l) => l * 0.35, palco: (l) => Math.max(2, l * 0.75) / 2 + 0.4, pista: (l) => l / 2, gazebo: (l) => l / 2,
+  imperiale: () => 1.3, sposi: () => 1.1, siepe: () => 0.4, vialetto: () => 1, tappeto: () => 0.7,
+}
+
 /** Rettangolo che contiene pareti e arredi: [minX, minZ, maxX, maxZ]. */
 export function estensione(a: Allestimento): [number, number, number, number] {
   let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity
@@ -264,6 +270,19 @@ export function estensione(a: Allestimento): [number, number, number, number] {
     x0 = Math.min(x0, x - r); z0 = Math.min(z0, z - r); x1 = Math.max(x1, x + r); z1 = Math.max(z1, z + r)
   }
   for (const [x, z] of a.pareti.punti) aggiungi(x, z)
-  for (const o of a.oggetti) aggiungi(o.x, o.z, o.tipo === 'giardino' ? (o.lunghezza ?? 20) / 2 : raggioIngombro(o))
+  for (const o of a.oggetti) {
+    const v = voceCatalogo(o.tipo)
+    if (!v.lunghezza) {
+      aggiungi(o.x, o.z, raggioIngombro(o))
+      continue
+    }
+    // Arredi lunghi: rettangolo ruotato invece di un cerchio, per non gonfiare l'ingombro
+    const l = (o.lunghezza ?? v.lunghezza.iniziale) / 2
+    const p = PROFONDITA[o.tipo]?.(l * 2) ?? 0.5
+    const r = (o.rot * Math.PI) / 180
+    const ex = Math.abs(Math.cos(r)) * l + Math.abs(Math.sin(r)) * p
+    const ez = Math.abs(Math.sin(r)) * l + Math.abs(Math.cos(r)) * p
+    x0 = Math.min(x0, o.x - ex); x1 = Math.max(x1, o.x + ex); z0 = Math.min(z0, o.z - ez); z1 = Math.max(z1, o.z + ez)
+  }
   return x0 === Infinity ? [-6, -5, 6, 5] : [x0, z0, x1, z1]
 }
