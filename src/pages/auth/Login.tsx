@@ -16,6 +16,13 @@ export function GuscioAuth({ titolo, sottotitolo, children }: { titolo: string; 
   )
 }
 
+/** Gli account senza email (es. "admin") accedono con un nome utente: internamente diventa nomeutente@utenti.gestionale. */
+const DOMINIO_NOMI_UTENTE = 'utenti.gestionale'
+const emailDiAccesso = (v: string) => {
+  const t = v.trim()
+  return t.includes('@') ? t : `${t.toLowerCase()}@${DOMINIO_NOMI_UTENTE}`
+}
+
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -26,7 +33,7 @@ export default function Login() {
     e.preventDefault()
     setErrore('')
     setInvio(true)
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+    const { error } = await supabase.auth.signInWithPassword({ email: emailDiAccesso(email), password })
     setInvio(false)
     if (error) setErrore(messaggioErrore(error))
   }
@@ -35,8 +42,8 @@ export default function Login() {
     <GuscioAuth titolo="Gestionale Eventi" sottotitolo="Accedi al tuo account">
       <form onSubmit={accedi} className="space-y-4">
         {errore && <Avviso>{errore}</Avviso>}
-        <Campo etichetta="Email">
-          <Input type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Campo etichetta="Email o nome utente">
+          <Input type="text" autoComplete="username" inputMode="email" autoCapitalize="none" spellCheck={false} required value={email} onChange={(e) => setEmail(e.target.value)} />
         </Campo>
         <Campo etichetta="Password">
           <Input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />

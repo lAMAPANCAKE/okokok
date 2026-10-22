@@ -7,7 +7,7 @@ import { messaggioErrore, supabase } from '../lib/supabase'
 import type { Evento, Turno } from '../lib/types'
 import { oppureErrore, useDati } from '../lib/useDati'
 
-export type TurnoConEvento = Turno & { eventi: Pick<Evento, 'nome' | 'luogo' | 'note' | 'cliente'> | null }
+export type TurnoConEvento = Turno & { eventi: Pick<Evento, 'nome' | 'luogo' | 'note' | 'cliente' | 'punto_ritrovo' | 'ora_ritrovo' | 'divisa' | 'referente'> | null }
 
 export function SchedaTurno({ turno, onRisposto }: { turno: TurnoConEvento; onRisposto?: () => void }) {
   const [rifiuto, setRifiuto] = useState(false)
@@ -47,6 +47,24 @@ export function SchedaTurno({ turno, onRisposto }: { turno: TurnoConEvento; onRi
                 {ev.luogo}
               </a>
             </dd>
+          </>
+        )}
+        {(ev?.punto_ritrovo || ev?.ora_ritrovo) && turno.stato !== 'annullato' && (
+          <>
+            <dt className="text-slate-500">Ritrovo</dt>
+            <dd className="font-medium">{[ev.ora_ritrovo && `ore ${formatOra(ev.ora_ritrovo)}`, ev.punto_ritrovo].filter(Boolean).join(' · ')}</dd>
+          </>
+        )}
+        {ev?.divisa && turno.stato !== 'annullato' && (
+          <>
+            <dt className="text-slate-500">Divisa</dt>
+            <dd>{ev.divisa}</dd>
+          </>
+        )}
+        {ev?.referente && turno.stato !== 'annullato' && (
+          <>
+            <dt className="text-slate-500">Referente</dt>
+            <dd>{ev.referente}</dd>
           </>
         )}
         <dt className="text-slate-500">Tariffa</dt>
@@ -101,7 +119,7 @@ export default function MieiTurni() {
   const oggi = oggiIso()
 
   const { dati, errore, caricamento, ricarica } = useDati(async () => {
-    let q = supabase.from('turni').select('*, eventi(nome, luogo, note, cliente)').eq('collaboratore_id', profilo!.id)
+    let q = supabase.from('turni').select('*, eventi(nome, luogo, note, cliente, punto_ritrovo, ora_ritrovo, divisa, referente)').eq('collaboratore_id', profilo!.id)
     q = vista === 'prossimi' ? q.gte('data', oggi).order('data').order('ora_inizio') : q.lt('data', oggi).order('data', { ascending: false }).limit(60)
     return oppureErrore(await q) as TurnoConEvento[]
   }, [vista, oggi, profilo?.id])

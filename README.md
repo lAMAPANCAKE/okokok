@@ -20,6 +20,8 @@ PWA mobile-first (React + Vite + TypeScript + Tailwind) con backend Supabase (Po
 | Da preventivo accettato a evento (con fabbisogno di personale già calcolato) | — | ✓ | ✓ |
 | Sopralluoghi: checklist in loco, misure, foto e planimetrie (bucket privato) | — | ✓ | ✓ |
 | Ordine di servizio dell’evento: scaletta (anche da modelli), menù con i 14 allergeni UE, intolleranze, personale, checklist di montaggio, dress code, PDF | lettura (turno confermato) | ✓ | ✓ |
+| Gruppo di lavoro dell’evento: squadra con mansione e orari, punto e ora di ritrovo, divisa, referente; messaggio per WhatsApp e PDF | lettura (nella scheda del turno) | ✓ | ✓ |
+| Disponibilità del personale su due settimane: libero, impegnato, da confermare, non disponibile | — | ✓ | ✓ |
 | Lista di carico dell’evento per reparto (sala, bar, cucina, allestimento, consumabili) calcolata da sala 3D, menù e zone, con scorta %, spunta al carico e PDF | lettura e spunta (turno confermato) | ✓ | ✓ |
 | Preventivo dal sopralluogo: personale calcolato (camerieri 1 ogni 10–12 coperti, baristi, cuochi…), arredi del 3D, voci delle zone, ultimi prezzi usati | — | ✓ | ✓ |
 | Zone del sopralluogo (bar, sala, cucina, back…): foto della location vuota, voci guidate e dettatura vocale, rendering con ChatGPT, prima/dopo e PDF per il cliente, funziona anche senza rete | — | ✓ | ✓ |
@@ -65,6 +67,16 @@ Il PDF si stampa o si manda allo staff. I collaboratori con turno confermato lo 
 - **consumabili.**
 
 I reparti sono Sala (food), Bar (beverage), Cucina (food), Allestimento e Consumabili. Coperti, ospiti e **scorta %** (predefinita 10%) si modificano. *Aggiorna* ricalcola e tiene le voci scritte a mano e quelle già caricate. Al carico si spunta ogni voce (salvataggio immediato): possono farlo anche i collaboratori con turno confermato, tramite la funzione `spunta_carico`, senza poter modificare la lista. *Solo da caricare* nasconde quanto già caricato. Il PDF per magazzino e autista ha le caselle e le firme. Serve la migrazione `20261022000004_lista_carico.sql`.
+
+**Gruppo di lavoro.** Nella scheda evento → *Gruppo di lavoro*:
+- **ritrovo e divisa:** punto e ora di ritrovo, divisa, referente in loco; i collaboratori li vedono nella scheda del turno;
+- **squadra:** mansione, inizio e fine di ognuno, modificabili;
+- **aggiungi al gruppo:** i candidati sono ordinati per disponibilità (liberi, già impegnati quel giorno, non disponibili e non selezionabili); chi viene aggiunto riceve la proposta di turno;
+- **messaggio per il gruppo:** da copiare, inviare su WhatsApp o stampare in PDF.
+
+**Disponibilità del personale** (menu *Personale*): griglia di due settimane, filtrabile per competenza, con il numero di liberi per giorno. Toccando una casella si vede l’impegno e si apre il gruppo di lavoro dell’evento. Serve la migrazione `20261022000005_gruppo_lavoro.sql`.
+
+**Accesso con nome utente.** Nel campo email si può scrivere anche solo un nome utente (es. `admin`): l’app lo trasforma in `admin@utenti.gestionale`.
 
 **Preventivo dal sopralluogo.** Da *Crea preventivo* nella scheda del sopralluogo, o nel preventivo in bozza collegato, *✨ Proponi voci dal sopralluogo* calcola:
 - **personale**: camerieri secondo la regola in *Impostazioni* (predefinita 1 ogni 10–12 coperti, con la forbice mostrata), responsabile di sala, 2 baristi per bancone, 1 addetto per buffet, cuochi 1 ogni 50 coperti, lavapiatti 1 ogni 100, sbarazzo 1 ogni 80;
@@ -135,7 +147,7 @@ Altri comandi: `npm run build` (build di produzione), `npm run preview` (antepri
 
 1. Crea un progetto su https://supabase.com scegliendo la regione **Central EU (Frankfurt)** (dati in UE, GDPR).
 2. **Applica le migrazioni**, in ordine:
-   - *Da browser*: SQL Editor → incolla ed esegui `supabase/migrations/20261018000001_fase1_schema.sql`, poi `…000002_fase1_sicurezza.sql`, `…000003_fase2.sql`, `…000004_fase3.sql`, `…000005_fase4.sql`, `20261019000001_fatture.sql`, `20261022000001_allestimento_3d.sql`, `20261022000002_zone_sopralluogo.sql`, `20261022000003_ordine_servizio.sql` e `20261022000004_lista_carico.sql`.
+   - *Da browser*: SQL Editor → incolla ed esegui `supabase/migrations/20261018000001_fase1_schema.sql`, poi `…000002_fase1_sicurezza.sql`, `…000003_fase2.sql`, `…000004_fase3.sql`, `…000005_fase4.sql`, `20261019000001_fatture.sql`, `20261022000001_allestimento_3d.sql`, `20261022000002_zone_sopralluogo.sql`, `20261022000003_ordine_servizio.sql`, `20261022000004_lista_carico.sql` e `20261022000005_gruppo_lavoro.sql`.
    - *Oppure da terminale* (CLI senza installazione):
      ```bash
      npx supabase login
@@ -197,6 +209,8 @@ Si può rilanciare: rigenera gli eventi DEMO. Non usarlo sul database di produzi
 In alternativa, senza service role key: apri `supabase/seed-demo.sql`, sostituisci `DEMO_PASSWORD_QUI` con la password scelta ed eseguilo nello SQL Editor.
 
 Dati DEMO commerciali (3 aziende, 1 sopralluogo, 2 preventivi, follow-up): esegui poi `supabase/seed-demo-fase3.sql` nello SQL Editor. Infine `supabase/seed-demo-fase4.sql` (valutazioni, indisponibilità, preventivo accettato per il report margini).
+
+**Demo completa per far provare l’app** (`supabase/seed-demo-completo.sql`): account manager con nome utente `admin`, 10 camerieri fittizi con calendario (turni e indisponibilità), 5 eventi DEMO (uno con gruppo di lavoro, ordine di servizio e lista di carico), CRM, sopralluogo con 3D e zone, preventivi in ogni stato, fatture con incassi, rimborsi, pagamenti e notifiche. Sostituisci `PASSWORD_ADMIN_QUI` con una password robusta (mai `admin`: chi entra vede anche i dati reali) ed esegui nello SQL Editor. Si può rilanciare: cancella e ricrea solo i dati DEMO.
 
 **Test del database** (non serve Supabase né Docker): `npm run test:db` applica tutte le migrazioni su un Postgres locale in memoria e verifica permessi per ruolo, calcoli, flussi e seed DEMO.
 

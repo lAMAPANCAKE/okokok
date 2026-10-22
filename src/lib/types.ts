@@ -39,6 +39,11 @@ export interface Evento {
   personale_richiesto: number
   stato: StatoEvento
   azienda_id?: string | null
+  /** Gruppo di lavoro: dove e quando si ritrova lo staff, divisa e referente in loco */
+  punto_ritrovo?: string | null
+  ora_ritrovo?: string | null
+  divisa?: string | null
+  referente?: string | null
 }
 
 export interface Copertura {

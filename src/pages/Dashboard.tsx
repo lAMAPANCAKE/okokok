@@ -34,7 +34,7 @@ function DashboardCollaboratore() {
 
   const { dati, errore, caricamento, ricarica } = useDati(async () => {
     const [prossimi, mese, documenti, mancanti, saldo] = await Promise.all([
-      supabase.from('turni').select('*, eventi(nome, luogo, note, cliente)').eq('collaboratore_id', profilo!.id).gte('data', oggi).in('stato', ['proposto', 'confermato']).order('data').order('ora_inizio').limit(10),
+      supabase.from('turni').select('*, eventi(nome, luogo, note, cliente, punto_ritrovo, ora_ritrovo, divisa, referente)').eq('collaboratore_id', profilo!.id).gte('data', oggi).in('stato', ['proposto', 'confermato']).order('data').order('ora_inizio').limit(10),
       supabase.from('turni').select('ore_totali, compenso_lordo').eq('collaboratore_id', profilo!.id).eq('stato', 'completato').gte('data', inizioMese),
       supabase.from('documenti_validita').select('validita').eq('collaboratore_id', profilo!.id).eq('piu_recente', true),
       supabase.from('documenti_mancanti').select('tipo').eq('collaboratore_id', profilo!.id),
