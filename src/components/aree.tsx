@@ -36,7 +36,7 @@ export function Tessera({ to, icona, colore, etichetta, descrizione, badge, alle
       <div className="flex items-start justify-between gap-2">
         <ChipIcona icona={icona} colore={colore} />
         {badge !== undefined && badge !== null && badge !== '' && (
-          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${allerta ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-700'}`}>{badge}</span>
+          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${allerta ? 'bg-amber-700 text-white' : 'bg-slate-100 text-slate-700'}`}>{badge}</span>
         )}
       </div>
       <span className="min-w-0">

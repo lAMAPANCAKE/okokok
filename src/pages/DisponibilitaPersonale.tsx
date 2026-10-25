@@ -21,7 +21,7 @@ const piuGiorni = (iso: string, n: number) => {
 
 const STILE: Record<StatoGiorno['tipo'] | 'proposto', string> = {
   libero: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-  impegnato: 'bg-sky-600 text-white ring-sky-600',
+  impegnato: 'bg-sky-700 text-white ring-sky-700',
   proposto: 'bg-amber-100 text-amber-900 ring-amber-300',
   non_disponibile: 'bg-red-50 text-red-700 ring-red-200',
 }
@@ -49,9 +49,9 @@ export default function DisponibilitaPersonale() {
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="flex overflow-hidden rounded-xl ring-1 ring-slate-300">
-          <button className="min-h-10 px-3 text-sm hover:bg-slate-50" onClick={() => setInizio(piuGiorni(inizio, -7))} aria-label="Settimana precedente">←</button>
-          <button className="min-h-10 border-x border-slate-300 px-3 text-sm hover:bg-slate-50" onClick={() => setInizio(lunediDi(oggi))}>Oggi</button>
-          <button className="min-h-10 px-3 text-sm hover:bg-slate-50" onClick={() => setInizio(piuGiorni(inizio, 7))} aria-label="Settimana successiva">→</button>
+          <button className="min-h-11 min-w-11 px-3 text-sm hover:bg-slate-50" onClick={() => setInizio(piuGiorni(inizio, -7))} aria-label="Settimana precedente">←</button>
+          <button className="min-h-11 border-x border-slate-300 px-3 text-sm hover:bg-slate-50" onClick={() => setInizio(lunediDi(oggi))}>Oggi</button>
+          <button className="min-h-11 min-w-11 px-3 text-sm hover:bg-slate-50" onClick={() => setInizio(piuGiorni(inizio, 7))} aria-label="Settimana successiva">→</button>
         </div>
         {competenze.length > 0 && (
           <Select className="min-h-10 w-auto text-sm" value={competenza} onChange={(e) => setCompetenza(e.target.value)} aria-label="Filtra per competenza">
@@ -93,7 +93,7 @@ export default function DisponibilitaPersonale() {
                 <tr key={p.id}>
                   <th className="sticky left-0 z-10 border-t border-slate-100 bg-white px-3 py-1.5 text-left font-normal">
                     <Link to={`/personale/${p.id}`} className="block max-w-36 truncate text-sm font-medium hover:underline">{nomeCompleto(p)}</Link>
-                    {p.competenze?.length > 0 && <span className="block max-w-36 truncate text-[11px] text-slate-500">{p.competenze.join(', ')}</span>}
+                    {p.competenze?.length > 0 && <span className="block max-w-36 truncate text-xs text-slate-500">{p.competenze.join(', ')}</span>}
                   </th>
                   {giorni.map((g) => {
                     const s = statoDi(dati!, p.id, g)

@@ -33,3 +33,6 @@ supabase/.temp
 
 # file di prova nella cartella principale
 /*.pdf
+
+# Playwright MCP (istantanee e catture del browser)
+.playwright-mcp/

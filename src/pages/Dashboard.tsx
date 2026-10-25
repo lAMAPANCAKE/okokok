@@ -100,8 +100,8 @@ function DashboardCollaboratore() {
         <h2 className="mb-2 font-semibold">Prossimo turno</h2>
         {prossimo ? <SchedaTurno turno={prossimo} /> : <Vuoto titolo="Nessun turno confermato in programma" />}
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
-          <Link to="/turni" className="underline-offset-2 hover:underline">Vedi tutti i turni →</Link>
-          <Link to="/disponibilita" className="underline-offset-2 hover:underline">Segna quando non sei disponibile →</Link>
+          <Link to="/turni" className="inline-flex min-h-11 items-center underline-offset-2 hover:underline">Vedi tutti i turni →</Link>
+          <Link to="/disponibilita" className="inline-flex min-h-11 items-center underline-offset-2 hover:underline">Segna quando non sei disponibile →</Link>
         </div>
       </section>
 
@@ -164,19 +164,25 @@ function DaFare({ isAdmin }: { isAdmin: boolean }) {
         ]
       : []),
   ]
+  // Solo quello che chiede davvero un'azione: le righe a zero non servono
+  const attive = voci.filter((v) => v.attivo)
   return (
     <section>
       <h2 className="mb-2 font-semibold">Da fare</h2>
+      {attive.length === 0 ? (
+        <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800 ring-1 ring-emerald-200">Tutto in ordine: niente da approvare, pagare o verificare.</p>
+      ) : (
       <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200">
-        {voci.map((v) => (
+        {attive.map((v) => (
           <li key={v.testo}>
             <Link to={v.to} className="flex min-h-12 items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
               <span className="text-sm">{v.testo}</span>
-              <span className={`font-semibold tabular-nums ${v.attivo ? 'text-amber-700' : 'text-slate-400'}`}>{v.valore}</span>
+              <span className="font-semibold text-amber-700 tabular-nums">{v.valore}</span>
             </Link>
           </li>
         ))}
       </ul>
+      )}
     </section>
   )
 }
@@ -209,7 +215,7 @@ function Commerciale() {
     <section>
       <div className="mb-2 flex items-center justify-between">
         <h2 className="font-semibold">Commerciale</h2>
-        <Link to="/crm" className="text-sm font-medium text-brand-700">Clienti →</Link>
+        <Link to="/crm" className="inline-flex min-h-11 items-center text-sm font-medium text-brand-700">Clienti →</Link>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Link to="/preventivi" className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
@@ -286,7 +292,7 @@ function DashboardStaff() {
       <section>
         <div className="mb-2 flex items-center justify-between">
           <h2 className="font-semibold">Prossimi 7 giorni</h2>
-          <Link to="/eventi/nuovo" className="text-sm font-medium text-brand-700">+ Nuovo evento</Link>
+          <Link to="/eventi/nuovo" className="inline-flex min-h-11 items-center text-sm font-medium text-brand-700">+ Nuovo evento</Link>
         </div>
         {ordinati.length === 0 ? (
           <Vuoto titolo="Nessun evento nei prossimi 7 giorni" />

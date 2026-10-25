@@ -114,7 +114,7 @@ export function Intestazione({ titolo, sottotitolo, azione, indietro }: { titolo
     <div className="mb-4 flex items-start justify-between gap-3">
       <div className="min-w-0">
         {indietro && (
-          <Link to={indietro} className="mb-1 inline-flex items-center text-sm text-slate-500 hover:text-slate-700">
+          <Link to={indietro} className="-ml-1 inline-flex min-h-11 items-center px-1 text-sm text-slate-600 hover:text-slate-900">
             ← Indietro
           </Link>
         )}

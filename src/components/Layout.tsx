@@ -73,7 +73,7 @@ export function Layout() {
           <VoceLaterale to="/" etichetta="Home" icona="home" colore="slate" />
           {gruppi.map((g) => (
             <div key={g.titolo}>
-              <p className="mb-1 px-3 text-[11px] font-semibold tracking-wider text-slate-400 uppercase">{g.titolo}</p>
+              <p className="mb-1 px-3 text-xs font-semibold tracking-wider text-slate-500 uppercase">{g.titolo}</p>
               <div className="flex flex-col gap-0.5">
                 {g.aree.map((a) => <VoceLaterale key={a.to} to={a.to} etichetta={a.etichetta} icona={a.icona} colore={a.colore} />)}
               </div>
@@ -119,7 +119,7 @@ export function Layout() {
                 <NavLink
                   to={v.to}
                   end={v.to === '/'}
-                  className={({ isActive }) => `flex flex-col items-center gap-0.5 pt-2 pb-1 text-[11px] font-medium ${isActive ? 'text-indigo-700' : 'text-slate-500'}`}
+                  className={({ isActive }) => `flex flex-col items-center gap-0.5 pt-2 pb-1 text-xs font-medium ${isActive ? 'text-indigo-700' : 'text-slate-500'}`}
                 >
                   {({ isActive }) => (
                     <>

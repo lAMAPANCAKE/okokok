@@ -203,7 +203,7 @@ export default function GruppoLavoro() {
       <section className="mb-4">
         <div className="mb-2 flex items-center justify-between gap-2">
           <h2 className="text-lg font-semibold">Squadra ({squadra.length}{evento.personale_richiesto ? `/${evento.personale_richiesto}` : ''})</h2>
-          <Link to={`/eventi/${id}`} className="text-sm text-brand-700 hover:underline">Turni e ore →</Link>
+          <Link to={`/eventi/${id}`} className="inline-flex min-h-11 items-center text-sm text-brand-700 hover:underline">Turni e ore →</Link>
         </div>
         {squadra.length === 0 ? (
           <p className="text-sm text-slate-500">Nessuno ancora: scegli le persone qui sotto.</p>
@@ -256,7 +256,7 @@ export default function GruppoLavoro() {
               return (
                 <li key={p.id}>
                   <label className={`flex min-h-12 items-center gap-3 py-1.5 ${bloccato ? 'opacity-60' : ''}`}>
-                    <input type="checkbox" className="h-5 w-5 shrink-0" disabled={bloccato} checked={scelti.has(p.id)} onChange={() => alterna(p.id)} />
+                    <input type="checkbox" className="h-6 w-6 shrink-0" disabled={bloccato} checked={scelti.has(p.id)} onChange={() => alterna(p.id)} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">{nomeCompleto(p)}</span>
                       {p.competenze?.length > 0 && <span className="block truncate text-xs text-slate-500">{p.competenze.join(', ')}</span>}
@@ -285,7 +285,7 @@ export default function GruppoLavoro() {
             <AreaTesto rows={Math.min(16, testoMessaggio.split('\n').length + 1)} readOnly value={testoMessaggio} className="text-sm" aria-label="Messaggio per il gruppo" />
             <div className="grid grid-cols-3 gap-2">
               <Bottone variante="secondario" className="min-h-10 text-sm" onClick={() => void copia()}>Copia</Bottone>
-              <a href={`https://wa.me/?text=${encodeURIComponent(testoMessaggio)}`} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center justify-center rounded-xl bg-emerald-600 text-sm font-medium text-white">WhatsApp</a>
+              <a href={`https://wa.me/?text=${encodeURIComponent(testoMessaggio)}`} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center justify-center rounded-xl bg-emerald-700 text-sm font-medium text-white hover:bg-emerald-800">WhatsApp</a>
               <Bottone variante="secondario" className="min-h-10 text-sm" onClick={() => void pdf()}>PDF</Bottone>
             </div>
             {infoModificata && <p className="text-xs text-amber-700">Salva ritrovo e divisa: così li vedono anche i collaboratori nell’app.</p>}
