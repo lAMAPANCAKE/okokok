@@ -30,7 +30,7 @@ const PASSO_GRIGLIA = 0.25
 // ---------------------------------------------------------------------------
 type Materiale = 'tovaglia' | 'oro' | 'cuscino' | 'legno' | 'legnoScuro' | 'nero' | 'metallo' | 'piatto' | 'foglie' | 'vaso' | 'fiori' | 'intonaco' | 'torta' | 'tessuto' | 'pista' | 'palco'
   | 'prato' | 'ghiaia' | 'telo' | 'vetro' | 'candela' | 'corteccia' | 'siepe' | 'fioriBianchi'
-  | 'laccato' | 'schermo' | 'rollup' | 'blu' | 'giallo'
+  | 'laccato' | 'schermo' | 'rollup' | 'blu' | 'giallo' | 'frassino' | 'paglia' | 'frassinoFine' | 'pagliaFine'
 
 const mat = (colore: string, roughness = 0.8, metalness = 0, extra: THREE.MeshStandardMaterialParameters = {}) =>
   new THREE.MeshStandardMaterial({ color: colore, roughness, metalness, ...extra })
@@ -43,6 +43,50 @@ function textureCanvas(dim: number, disegna: (c: CanvasRenderingContext2D, dim: 
   t.colorSpace = THREE.SRGBColorSpace
   t.wrapS = t.wrapT = THREE.RepeatWrapping
   return t
+}
+
+/** Paglia di Vienna: intreccio a maglie ottagonali (un riquadro ogni 6 cm). */
+function texturePaglia() {
+  const t = textureCanvas(256, (c, d) => {
+    c.fillStyle = '#6b4a24'
+    c.fillRect(0, 0, d, d)
+    const passo = d / 4
+    c.lineCap = 'round'
+    for (const [colore, larghezza] of [['#b98d4f', 7], ['#e9c98c', 4]] as const) {
+      c.strokeStyle = colore
+      c.lineWidth = larghezza
+      for (let i = -4; i <= 8; i++) {
+        for (const [x0, y0, x1, y1] of [[i * passo, 0, i * passo, d], [0, i * passo, d, i * passo], [i * passo, 0, i * passo + d, d], [i * passo, 0, i * passo - d, d]]) {
+          c.beginPath()
+          c.moveTo(x0, y0)
+          c.lineTo(x1, y1)
+          c.stroke()
+        }
+      }
+    }
+  })
+  t.repeat.set(1 / 0.06, 1 / 0.06)
+  t.anisotropy = 4
+  return t
+}
+
+/** Frassino: fibre lunghe e chiare con qualche venatura più scura, lungo la u. */
+function textureFrassino() {
+  return textureCanvas(256, (c, d) => {
+    c.fillStyle = '#d99a4b'
+    c.fillRect(0, 0, d, d)
+    let seme = 7
+    const caso = () => ((seme = (seme * 16807) % 2147483647) / 2147483647)
+    for (let i = 0; i < 70; i++) {
+      const y = caso() * d
+      c.strokeStyle = caso() < 0.3 ? 'rgba(120,70,20,.35)' : caso() < 0.6 ? 'rgba(240,190,110,.35)' : 'rgba(170,105,40,.25)'
+      c.lineWidth = 0.5 + caso() * 2
+      c.beginPath()
+      c.moveTo(0, y)
+      for (let x = 0; x <= d; x += 16) c.lineTo(x, y + Math.sin(x / 40 + i) * 2)
+      c.stroke()
+    }
+  })
 }
 
 const rumore = (c: CanvasRenderingContext2D, dim: number, quanti: number, colori: string[], dimMax = 2) => {
@@ -145,7 +189,12 @@ const disegnaGhiaia = (c: CanvasRenderingContext2D, d: number) => {
 // ---------------------------------------------------------------------------
 // Geometrie degli arredi (unite per materiale e messe in cache)
 // ---------------------------------------------------------------------------
-type Parte = [THREE.BufferGeometry, Materiale]
+/** Geometria e materiale; il livello, se c'è, dice se il pezzo si vede solo da vicino o solo da lontano. */
+type Parte = [THREE.BufferGeometry, Materiale, Livello?]
+type Livello = 'vicino' | 'lontano'
+/** Oltre questa distanza dalla camera (m) le sedie dettagliate lasciano il posto a quelle leggere. */
+const DISTANZA_DETTAGLIO = 6
+const DISTANZA_DETTAGLIO_RENDER = 20
 
 const pezzo = (g: THREE.BufferGeometry, x = 0, y = 0, z = 0, ry = 0, rx = 0, rz = 0) => {
   if (rx || ry || rz) g.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(rx, ry, rz)))
@@ -166,15 +215,131 @@ function unisci(geometrie: THREE.BufferGeometry[]) {
   return g
 }
 
-/** Sedia chiavarina: seduta all'origine, schienale verso +Z (chi siede guarda verso −Z). */
-function partiSedia(): Parte[] {
-  const telaio: THREE.BufferGeometry[] = [scatola(0.42, 0.04, 0.4, 0, 0.45, 0)]
-  for (const sx of [-0.18, 0.18]) {
-    for (const sz of [-0.17, 0.17]) telaio.push(cilindro(0.014, 0.012, 0.45, sx, 0.225, sz, 8))
-    telaio.push(cilindro(0.014, 0.014, 0.52, sx, 0.72, 0.19, 8))
+/** Asta cilindrica tra due punti (gambe dritte). */
+function asta(a: THREE.Vector3, b: THREE.Vector3, rA: number, rB = rA, seg = 6) {
+  const d = b.clone().sub(a)
+  const g = new THREE.CylinderGeometry(rB, rA, d.length(), seg)
+  g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()))
+  return g.translate((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2)
+}
+
+/** Listello piatto tra due punti: larghezza sull'asse X locale, spessore su Z. */
+function listello(a: THREE.Vector3, b: THREE.Vector3, larghezza: number, spessore: number) {
+  const d = b.clone().sub(a)
+  const g = new THREE.BoxGeometry(larghezza, d.length(), spessore)
+  g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()))
+  return g.translate((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2)
+}
+
+/** Legno curvato a vapore: tubo lungo una curva liscia. */
+const curvato = (punti: THREE.Vector3[], r: number, tratti = 10, lati = 5) => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(punti), tratti, r, lati)
+const arco = (a: THREE.Vector3, controllo: THREE.Vector3, b: THREE.Vector3, r: number, tratti = 8, lati = 5) =>
+  new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(a, controllo, b), tratti, r, lati)
+
+/** Rettangolo dagli angoli arrotondati (seduta vista dall'alto, coordinate x e z). */
+function rettangoloTondo(l: number, p: number, r: number) {
+  const s = new THREE.Shape()
+  const x = l / 2, y = p / 2
+  s.moveTo(-x + r, -y)
+  s.lineTo(x - r, -y)
+  s.quadraticCurveTo(x, -y, x, -y + r)
+  s.lineTo(x, y - r)
+  s.quadraticCurveTo(x, y, x - r, y)
+  s.lineTo(-x + r, y)
+  s.quadraticCurveTo(-x, y, -x, y - r)
+  s.lineTo(-x, -y + r)
+  s.quadraticCurveTo(-x, -y, -x + r, -y)
+  return s
+}
+
+/** Lastra orizzontale da una forma: spessore h, faccia superiore all'altezza y; con smusso se richiesto. */
+function lastra(forma: THREE.Shape, h: number, y: number, smusso = 0, curve = 3) {
+  const g = new THREE.ExtrudeGeometry(forma, {
+    depth: h - smusso * 2, bevelEnabled: smusso > 0, bevelThickness: smusso, bevelSize: smusso, bevelSegments: 2, curveSegments: curve,
+  })
+  return g.rotateX(Math.PI / 2).translate(0, y - smusso, 0)
+}
+
+/** Scambia u e v: la venatura del legno corre lungo i listelli invece che di traverso. */
+function ruotaUV(g: THREE.BufferGeometry) {
+  const uv = g.getAttribute('uv')
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getY(i), uv.getX(i))
+  return g
+}
+
+/**
+ * Sedia Toscana (cross-back) in frassino con seduta in paglia di Vienna, ricostruita dalla foto
+ * del noleggio. Seduta all'origine, schienale verso +Z (chi siede guarda verso −Z).
+ * Due versioni con le stesse proporzioni: leggera (circa 1.000 triangoli) per la sala intera,
+ * dettagliata (smussi, venatura, bulloni, archetti pieni) per chi guarda un tavolo da vicino.
+ */
+function partiSedia(dettagliata = false): Parte[] {
+  const v = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z)
+  const lati = dettagliata ? 12 : 5
+  const quota = 0.46 // piano della seduta
+  const legno: THREE.BufferGeometry[] = []
+  const bulloni: THREE.BufferGeometry[] = []
+  const bullone = (x: number, y: number, z: number, verso: THREE.Vector3) => {
+    const g = new THREE.CylinderGeometry(0.007, 0.007, 0.004, 10)
+    g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), verso))
+    bulloni.push(g.translate(x, y, z))
   }
-  for (const y of [0.66, 0.78, 0.92]) telaio.push(scatola(0.36, 0.025, 0.02, 0, y, 0.19))
-  return [[unisci(telaio), 'oro'], [scatola(0.39, 0.04, 0.37, 0, 0.49, -0.01), 'cuscino']]
+
+  // Telaio della seduta: fascia stondata alta 5 cm; dentro, la paglia appena incassata
+  const anello = rettangoloTondo(0.45, 0.43, 0.08)
+  anello.holes.push(rettangoloTondo(0.37, 0.35, 0.045))
+  legno.push(lastra(anello, 0.05, quota, dettagliata ? 0.006 : 0, dettagliata ? 8 : 3))
+  const paglia = lastra(rettangoloTondo(0.375, 0.355, 0.045), 0.012, quota - 0.007, 0, dettagliata ? 8 : 3)
+
+  // Gambe posteriori: un solo pezzo curvato a vapore che sale fino in cima allo schienale
+  const posteriore = (sx: number) => [v(sx * 0.2, 0, 0.27), v(sx * 0.197, 0.25, 0.22), v(sx * 0.195, quota, 0.19), v(sx * 0.19, 0.68, 0.215), v(sx * 0.185, 0.875, 0.265)]
+  for (const sx of [-1, 1]) {
+    legno.push(curvato(posteriore(sx), 0.018, dettagliata ? 28 : 10, lati))
+    if (dettagliata) legno.push(new THREE.SphereGeometry(0.018, lati, 6, 0, Math.PI * 2, 0, Math.PI / 2).translate(sx * 0.185, 0.875, 0.265))
+    // Gambe anteriori, leggermente aperte e assottigliate verso terra
+    legno.push(asta(v(sx * 0.205, 0, -0.215), v(sx * 0.19, quota - 0.03, -0.17), 0.015, 0.019, lati))
+    // Archetti laterali: da gamba a gamba, il colmo tocca la fascia della seduta
+    legno.push(arco(v(sx * 0.2, 0.2, -0.195), v(sx * 0.2, 0.5, 0.01), v(sx * 0.198, 0.2, 0.225), 0.013, dettagliata ? 20 : 8, dettagliata ? 8 : 5))
+  }
+  // Archetti davanti e dietro
+  legno.push(arco(v(-0.2, 0.2, -0.2), v(0, 0.5, -0.2), v(0.2, 0.2, -0.2), 0.013, dettagliata ? 20 : 8, dettagliata ? 8 : 5))
+  legno.push(arco(v(-0.197, 0.22, 0.215), v(0, 0.5, 0.21), v(0.197, 0.22, 0.215), 0.013, dettagliata ? 20 : 8, dettagliata ? 8 : 5))
+
+  // Traverso alto curvato all'indietro, con le estremità arrotondate che sporgono oltre i montanti
+  const traverso = curvato([v(-0.215, 0, 0), v(-0.11, 0, 0.022), v(0, 0, 0.03), v(0.11, 0, 0.022), v(0.215, 0, 0)], 0.021, dettagliata ? 24 : 8, lati)
+  legno.push(traverso.scale(1, 1.75, 0.6).translate(0, 0.855, 0.262))
+  if (dettagliata) for (const sx of [-1, 1]) legno.push(new THREE.SphereGeometry(0.021, lati, 8).scale(0.6, 1.75, 0.6).translate(sx * 0.215, 0.855, 0.262))
+
+  // Croce dello schienale: due listelli dagli angoli alti fino a poco sopra la seduta
+  const croce: [THREE.Vector3, THREE.Vector3][] = [
+    [v(-0.17, 0.83, 0.258), v(0.18, quota + 0.035, 0.196)],
+    [v(0.17, 0.83, 0.266), v(-0.18, quota + 0.035, 0.204)],
+  ]
+  for (const [a, b] of croce) {
+    const g = listello(a, b, 0.032, 0.013)
+    legno.push(dettagliata ? ruotaUV(g) : g)
+  }
+
+  if (dettagliata) {
+    // Bulloni a vista: traverso sui montanti e centro della croce
+    for (const sx of [-1, 1]) bullone(sx * 0.185, 0.87, 0.24, v(0, 0, -1))
+    bullone(0, 0.655, 0.222, v(0, -0.28, -1).normalize())
+    return [[unisci(legno), 'frassinoFine'], [paglia, 'pagliaFine'], [unisci(bulloni), 'metallo']]
+  }
+  return [[unisci(legno), 'frassino'], [paglia, 'paglia']]
+}
+
+/** Sedie già messe in posizione: ogni pezzo ripetuto per ogni matrice e unito, versione leggera e dettagliata. */
+function sedieConMatrici(matrici: THREE.Matrix4[]): Parte[] {
+  if (!matrici.length) return []
+  const risultato: Parte[] = []
+  for (const [dettagliata, livello] of [[false, 'lontano'], [true, 'vicino']] as const) {
+    for (const [g, m] of partiSedia(dettagliata)) {
+      risultato.push([unisci(matrici.map((mx) => g.clone().applyMatrix4(mx))), m, livello])
+      g.dispose()
+    }
+  }
+  return risultato
 }
 
 function partiSgabello(): Parte[] {
@@ -224,17 +389,7 @@ function coperti(posti: { x: number; z: number; ux: number; uz: number }[], alte
 
 /** Sedie rivolte verso il tavolo; (ux, uz) è la direzione dal tavolo alla sedia (di default dal centro). */
 function sedieAttorno(posti: { x: number; z: number; ux?: number; uz?: number }[]): Parte[] {
-  if (!posti.length) return []
-  const [telaio, cuscino] = partiSedia()
-  const t: THREE.BufferGeometry[] = [], c: THREE.BufferGeometry[] = []
-  for (const p of posti) {
-    const m = new THREE.Matrix4().makeRotationY(Math.atan2(p.ux ?? p.x, p.uz ?? p.z)).setPosition(p.x, 0, p.z)
-    t.push(telaio[0].clone().applyMatrix4(m))
-    c.push(cuscino[0].clone().applyMatrix4(m))
-  }
-  telaio[0].dispose()
-  cuscino[0].dispose()
-  return [[unisci(t), 'oro'], [unisci(c), 'cuscino']]
+  return sedieConMatrici(posti.map((p) => new THREE.Matrix4().makeRotationY(Math.atan2(p.ux ?? p.x, p.uz ?? p.z)).setPosition(p.x, 0, p.z)))
 }
 
 function centrotavola(x = 0, z = 0): Parte[] {
@@ -288,7 +443,7 @@ function costruisciParti(o: Oggetto, altezzaPareti: number): Parte[] {
       return [[new THREE.LatheGeometry(profilo, 32), 'tovaglia'], ...centrotavola().map(([g, m]) => [g.translate(0, 0.25, 0), m] as Parte)]
     }
     case 'sedia':
-      return partiSedia()
+      return sedieConMatrici([new THREE.Matrix4()])
     case 'sgabello':
       return partiSgabello()
     case 'lounge':
@@ -543,16 +698,7 @@ function uvInMetri(g: THREE.BufferGeometry, l: number, p: number) {
 
 /** Sedie in fila lungo X, rivolte verso −Z. */
 function sedieInFila(n: number, passo = 0.55): Parte[] {
-  const [telaio, cuscino] = partiSedia()
-  const t: THREE.BufferGeometry[] = [], c: THREE.BufferGeometry[] = []
-  for (let i = 0; i < n; i++) {
-    const x = (i - (n - 1) / 2) * passo
-    t.push(telaio[0].clone().translate(x, 0, 0))
-    c.push(cuscino[0].clone().translate(x, 0, 0))
-  }
-  telaio[0].dispose()
-  cuscino[0].dispose()
-  return n ? [[unisci(t), 'oro'], [unisci(c), 'cuscino']] : []
+  return sedieConMatrici(Array.from({ length: n }, (_, i) => new THREE.Matrix4().makeTranslation((i - (n - 1) / 2) * passo, 0, 0)))
 }
 
 /** Ciuffi di fiori (rosa e bianchi) e verde attorno ai punti indicati. */
@@ -672,6 +818,11 @@ export class Scena3D {
       intonaco: mat('#ece7df', 0.95),
       torta: mat('#fff4ec', 0.6),
       tessuto: mat('#55606e', 0.95),
+      frassino: mat('#d89b4c', 0.5),
+      // Da lontano la paglia è un colore pieno: l'intreccio farebbe solo sfarfallio
+      paglia: mat('#d7b06f', 0.9),
+      frassinoFine: new THREE.MeshStandardMaterial({ roughness: 0.45, map: textureFrassino() }),
+      pagliaFine: new THREE.MeshStandardMaterial({ roughness: 0.85, map: texturePaglia() }),
       pista: new THREE.MeshStandardMaterial({
         roughness: 0.25,
         metalness: 0.2,
@@ -839,6 +990,10 @@ export class Scena3D {
     const altezza = Math.round(larghezza / rapporto)
     const nascosti = [this.evidenzia, this.aiuti, this.anteprima, this.griglia, this.etichette].filter((o): o is NonNullable<typeof o> => !!o && o.visible)
     nascosti.forEach((o) => (o.visible = false))
+    // Il rendering non è in tempo reale: sedie dettagliate anche per i tavoli lontani
+    const lod: THREE.LOD[] = []
+    this.arredi.traverse((o) => o instanceof THREE.LOD && lod.push(o))
+    lod.forEach((o) => (o.levels[1].distance = DISTANZA_DETTAGLIO_RENDER))
     const rapportoPixel = this.renderer.getPixelRatio()
     const sfondo = this.scena.background
     const nebbia = this.scena.fog as THREE.Fog
@@ -926,6 +1081,7 @@ export class Scena3D {
       this.renderer.toneMappingExposure = 1.05
       this.sole.intensity = intensitaSole
       nascosti.forEach((o) => (o.visible = true))
+      lod.forEach((o) => (o.levels[1].distance = DISTANZA_DETTAGLIO))
       for (const p of this.pareti) p.visible = true
       this.renderer.setPixelRatio(rapportoPixel)
       this.ridimensiona()
@@ -1145,11 +1301,19 @@ export class Scena3D {
           this.cacheParti.set(chiave, parti)
         }
         const gruppo = new THREE.Group()
-        for (const [g, m] of parti) {
+        // Le sedie hanno due versioni: three.js mostra quella dettagliata solo con la camera vicina
+        const livelli = { vicino: new THREE.Group(), lontano: new THREE.Group() }
+        for (const [g, m, livello] of parti) {
           const mesh = new THREE.Mesh(g, this.materiali[m])
           mesh.castShadow = !['pista', 'prato', 'ghiaia', 'vetro'].includes(m)
           mesh.receiveShadow = true
-          gruppo.add(mesh)
+          ;(livello ? livelli[livello] : gruppo).add(mesh)
+        }
+        if (livelli.lontano.children.length) {
+          const lod = new THREE.LOD()
+          lod.addLevel(livelli.vicino, 0)
+          lod.addLevel(livelli.lontano, DISTANZA_DETTAGLIO)
+          gruppo.add(lod)
         }
         // Impronta a terra per l'evidenziazione della selezione
         const box = new THREE.Box3().setFromObject(gruppo)
