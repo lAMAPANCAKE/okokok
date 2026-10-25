@@ -166,8 +166,8 @@ export default function ListaCarico() {
       {lista.voci.length > 0 && (
         <div className="mb-3 flex items-center justify-between gap-2">
           <p className="text-sm font-medium">Caricato {caricati}/{lista.voci.length}</p>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" className="h-5 w-5" checked={soloDaCaricare} onChange={(e) => setSoloDaCaricare(e.target.checked)} />
+          <label className="flex min-h-11 items-center gap-2 text-sm">
+            <input type="checkbox" className="h-6 w-6" checked={soloDaCaricare} onChange={(e) => setSoloDaCaricare(e.target.checked)} />
             Solo da caricare
           </label>
         </div>
@@ -198,9 +198,9 @@ export default function ListaCarico() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <Input className={`min-h-10 ${v.caricato ? 'text-slate-400 line-through' : ''}`} value={v.voce} onChange={(e) => cambiaVoce(v.chiave, { voce: e.target.value, auto: false })} aria-label="Voce" />
-                        {(v.note || (v.unita && v.unita !== 'pz')) && <p className="px-1 text-[11px] text-slate-500">{[v.unita && v.unita !== 'pz' ? v.unita : '', v.note].filter(Boolean).join(' · ')}</p>}
+                        {(v.note || (v.unita && v.unita !== 'pz')) && <p className="px-1 text-xs text-slate-500">{[v.unita && v.unita !== 'pz' ? v.unita : '', v.note].filter(Boolean).join(' · ')}</p>}
                       </div>
-                      <button type="button" onClick={() => cambia({ voci: lista.voci.filter((x) => x.chiave !== v.chiave) })} aria-label={`Elimina ${v.voce}`} className="flex h-10 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100">✕</button>
+                      <button type="button" onClick={() => cambia({ voci: lista.voci.filter((x) => x.chiave !== v.chiave) })} aria-label={`Elimina ${v.voce}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-red-700">✕</button>
                     </>
                   ) : (
                     <div className="flex min-h-10 flex-1 items-center gap-3">
@@ -210,7 +210,7 @@ export default function ListaCarico() {
                   )}
                 </div>
               ))}
-              {!voci.length && <p className="px-2 py-1 text-sm text-slate-400">{tutte.length ? 'Tutto caricato ✓' : 'Nessuna voce'}</p>}
+              {!voci.length && <p className="px-2 py-1 text-sm text-slate-500">{tutte.length ? 'Tutto caricato ✓' : 'Nessuna voce'}</p>}
               {isStaff && (
                 <form className="flex gap-2 pt-1" onSubmit={(e) => { e.preventDefault(); aggiungi(reparto) }}>
                   <Input className="min-h-10" value={nuove[reparto] ?? ''} onChange={(e) => setNuove((n) => ({ ...n, [reparto]: e.target.value }))} placeholder={`Aggiungi a ${nome.toLowerCase()}`} aria-label={`Nuova voce ${nome}`} />
