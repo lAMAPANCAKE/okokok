@@ -1,0 +1,370 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-25T00:00:00Z",
+  "title": "Design System: Gestionale Eventi",
+  "extensions": {
+    "colorMeta": {
+      "bordeaux": {
+        "role": "primary",
+        "displayName": "Bordeaux",
+        "canonical": "#7A1F33",
+        "tonalRamp": [
+          "#33191F",
+          "#5A2531",
+          "#852E41",
+          "#B3334F",
+          "#CE647B",
+          "#DAA5B0",
+          "#EAD6DB",
+          "#F6EFF0"
+        ]
+      },
+      "bordeaux-deep": {
+        "role": "primary",
+        "displayName": "Bordeaux scuro",
+        "canonical": "#5E1626",
+        "tonalRamp": [
+          "#34181F",
+          "#5B2430",
+          "#872C40",
+          "#B6304E",
+          "#D1617A",
+          "#DBA4B0",
+          "#EBD6DB",
+          "#F6EFF0"
+        ]
+      },
+      "bordeaux-soft": {
+        "role": "primary",
+        "displayName": "Bordeaux velato",
+        "canonical": "#F6E9EC",
+        "tonalRamp": [
+          "#301D21",
+          "#522D36",
+          "#783B49",
+          "#A0465A",
+          "#BF7385",
+          "#D2ADB5",
+          "#E7D9DD",
+          "#F5F0F1"
+        ]
+      },
+      "linen": {
+        "role": "neutral",
+        "displayName": "Lino",
+        "canonical": "#FAF8F5",
+        "tonalRamp": [
+          "#2E281F",
+          "#4F4331",
+          "#725E41",
+          "#977A4F",
+          "#B79F7B",
+          "#CEC2B0",
+          "#E6E2DB",
+          "#F4F3F0"
+        ]
+      },
+      "tablecloth": {
+        "role": "neutral",
+        "displayName": "Tovaglia",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#595959",
+          "#737373",
+          "#999999",
+          "#BFBFBF",
+          "#E0E0E0",
+          "#F2F2F2"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Inchiostro",
+        "canonical": "#1F1A17",
+        "tonalRamp": [
+          "#2A2523",
+          "#463E39",
+          "#64574E",
+          "#836F63",
+          "#A6968C",
+          "#C6BEB9",
+          "#E3E0DE",
+          "#F3F2F1"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Inchiostro tenue",
+        "canonical": "#5F5650",
+        "tonalRamp": [
+          "#282624",
+          "#443F3C",
+          "#605853",
+          "#7C716A",
+          "#A19791",
+          "#C3BEBB",
+          "#E2E0DF",
+          "#F3F2F2"
+        ]
+      },
+      "seam": {
+        "role": "neutral",
+        "displayName": "Cucitura",
+        "canonical": "#E8E2DA",
+        "tonalRamp": [
+          "#2B2721",
+          "#4A4135",
+          "#6A5C48",
+          "#8C765A",
+          "#AE9C84",
+          "#CAC1B5",
+          "#E4E1DD",
+          "#F4F2F1"
+        ]
+      },
+      "seam-strong": {
+        "role": "neutral",
+        "displayName": "Cucitura marcata",
+        "canonical": "#D3CAC0",
+        "tonalRamp": [
+          "#2A2622",
+          "#484038",
+          "#665A4C",
+          "#867460",
+          "#A99A89",
+          "#C7C0B7",
+          "#E3E1DD",
+          "#F3F2F1"
+        ]
+      },
+      "sage-ok": {
+        "role": "status",
+        "displayName": "Salvia",
+        "canonical": "#2F6B4F",
+        "tonalRamp": [
+          "#1E2F27",
+          "#2E5141",
+          "#3D765B",
+          "#499D76",
+          "#76BC9B",
+          "#AED1C0",
+          "#DAE7E1",
+          "#F0F5F2"
+        ]
+      },
+      "amber-wait": {
+        "role": "status",
+        "displayName": "Ambra",
+        "canonical": "#8A5410",
+        "tonalRamp": [
+          "#382815",
+          "#63441C",
+          "#93601F",
+          "#C87D1D",
+          "#E0A152",
+          "#E3C39C",
+          "#EEE2D3",
+          "#F7F3EE"
+        ]
+      },
+      "wine-alert": {
+        "role": "status",
+        "displayName": "Vino",
+        "canonical": "#9B2C2C",
+        "tonalRamp": [
+          "#331A1A",
+          "#592727",
+          "#823030",
+          "#AF3737",
+          "#CB6767",
+          "#D8A6A6",
+          "#EAD7D7",
+          "#F6EFEF"
+        ]
+      },
+      "slate-busy": {
+        "role": "status",
+        "displayName": "Ardesia",
+        "canonical": "#2F5D7C",
+        "tonalRamp": [
+          "#1C2830",
+          "#2C4454",
+          "#38607A",
+          "#427CA3",
+          "#71A1C1",
+          "#ABC3D3",
+          "#D9E2E8",
+          "#F0F3F5"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Titolo pagina",
+        "purpose": "Uno per schermata."
+      },
+      "title": {
+        "displayName": "Titolo sezione",
+        "purpose": "Sezioni e schede."
+      },
+      "body": {
+        "displayName": "Testo",
+        "purpose": "Contenuto e campi."
+      },
+      "body-small": {
+        "displayName": "Testo piccolo",
+        "purpose": "Date e descrizioni."
+      },
+      "label": {
+        "displayName": "Etichetta",
+        "purpose": "Barra in basso, chip, gruppi; minimo 12 px."
+      },
+      "figure": {
+        "displayName": "Cifre",
+        "purpose": "Numeri di riepilogo, cifre tabulari."
+      }
+    },
+    "shadows": [
+      {
+        "name": "foglio",
+        "value": "0 12px 32px rgba(31, 26, 23, 0.16)",
+        "purpose": "Pannelli e finestre sovrapposti."
+      },
+      {
+        "name": "pulsante-piu",
+        "value": "0 6px 16px rgba(122, 31, 51, 0.28)",
+        "purpose": "Solo il pulsante + della barra in basso."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+        "purpose": "Comparsa di pannelli e cambi di stato, 150–200 ms."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "md",
+        "value": "768px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Pulsante principale",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Azione principale, una per schermata.",
+      "html": "<button class=\"ds-btn-primary\">Salva ritrovo e divisa</button>",
+      "css": ".ds-btn-primary{font-family:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;background:#7A1F33;color:#fff;height:48px;padding:0 20px;border:0;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;transition:background .15s}.ds-btn-primary:hover{background:#5E1626}.ds-btn-primary:focus-visible{outline:2px solid #7A1F33;outline-offset:2px}"
+    },
+    {
+      "name": "Pulsante secondario",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Azioni alternative accanto al principale.",
+      "html": "<button class=\"ds-btn-secondary\">Copia messaggio</button>",
+      "css": ".ds-btn-secondary{font-family:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;background:#fff;color:#1F1A17;height:48px;padding:0 20px;border:1px solid #D3CAC0;border-radius:12px;font-size:16px;font-weight:500;cursor:pointer}.ds-btn-secondary:hover{background:#FAF8F5}.ds-btn-secondary:focus-visible{outline:2px solid #7A1F33;outline-offset:2px}"
+    },
+    {
+      "name": "Campo",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo di testo da 48 px, testo a 16 px.",
+      "html": "<input class=\"ds-input\" placeholder=\"Punto di ritrovo\">",
+      "css": ".ds-input{font-family:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;background:#fff;color:#1F1A17;height:48px;padding:0 12px;border:1px solid #D3CAC0;border-radius:12px;font-size:16px;width:260px}.ds-input::placeholder{color:#8A817A}.ds-input:focus{outline:none;border:2px solid #7A1F33;padding:0 11px}"
+    },
+    {
+      "name": "Chip di stato",
+      "kind": "chip",
+      "refersTo": "chip-status-ok",
+      "description": "Stato con parola, mai solo colore.",
+      "html": "<span class=\"ds-chip ds-ok\">Confermato</span> <span class=\"ds-chip ds-wait\">Da confermare</span> <span class=\"ds-chip ds-alert\">Non disp.</span>",
+      "css": ".ds-chip{font-family:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;display:inline-flex;padding:2px 10px;border-radius:9999px;font-size:12px;font-weight:600}.ds-ok{background:#E6F1EA;color:#2F6B4F}.ds-wait{background:#FBF1DF;color:#8A5410}.ds-alert{background:#FBE9E7;color:#9B2C2C}"
+    },
+    {
+      "name": "Riquadro d'area",
+      "kind": "custom",
+      "refersTo": "area-tile",
+      "description": "Accesso a un'area con icona tenue e contatore.",
+      "html": "<a class=\"ds-tile\" href=\"#\"><span class=\"ds-tile-top\"><span class=\"ds-tile-ico\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17 20v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M10 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 8v6M22 11h-6\"/></svg></span><span class=\"ds-tile-badge\">3/8</span></span><span class=\"ds-tile-name\">Gruppo di lavoro</span><span class=\"ds-tile-desc\">Squadra, ritrovo e divisa</span></a>",
+      "css": ".ds-tile{font-family:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;display:flex;flex-direction:column;gap:6px;width:170px;padding:12px;background:#fff;border:1px solid #E8E2DA;border-radius:16px;color:#1F1A17;text-decoration:none;transition:border-color .15s}.ds-tile:hover{border-color:#D3CAC0}.ds-tile:focus-visible{outline:2px solid #7A1F33;outline-offset:2px}.ds-tile-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}.ds-tile-ico{display:inline-flex;width:44px;height:44px;align-items:center;justify-content:center;border-radius:12px;background:#E6F1EA;color:#2F6B4F}.ds-tile-badge{padding:2px 8px;border-radius:9999px;background:#8A5410;color:#fff;font-size:12px;font-weight:600}.ds-tile-name{font-size:14px;font-weight:600}.ds-tile-desc{font-size:12px;color:#5F5650}"
+    },
+    {
+      "name": "Scheda",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Tovaglia su lino, cucitura, niente ombra.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">DEMO Matrimonio Rossi–Bianchi</div><div class=\"ds-card-meta\">sab 31 ott · 17:00–01:00 · Villa Aurora</div><span class=\"ds-chip ds-wait\">Mancano 4</span></div>",
+      "css": ".ds-card{font-family:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;background:#fff;border:1px solid #E8E2DA;border-radius:16px;padding:16px;width:300px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}.ds-card-title{font-size:17px;font-weight:600;color:#1F1A17}.ds-card-meta{font-size:14px;color:#5F5650}.ds-chip{display:inline-flex;padding:2px 10px;border-radius:9999px;font-size:12px;font-weight:600}.ds-wait{background:#FBF1DF;color:#8A5410}"
+    },
+    {
+      "name": "Barra in basso",
+      "kind": "nav",
+      "refersTo": "nav-bottom-active",
+      "description": "Navigazione del telefono con pulsante + al centro.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-i ds-on\" href=\"#\">Home</a><a class=\"ds-nav-i\" href=\"#\">Eventi</a><button class=\"ds-nav-plus\" aria-label=\"Crea nuovo\">+</button><a class=\"ds-nav-i\" href=\"#\">Personale</a><a class=\"ds-nav-i\" href=\"#\">Tutto</a></nav>",
+      "css": ".ds-nav{font-family:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;display:flex;align-items:center;justify-content:space-around;width:360px;padding:8px 4px;background:#fff;border-top:1px solid #E8E2DA}.ds-nav-i{font-size:12px;font-weight:600;color:#5F5650;text-decoration:none;padding:6px 12px;border-radius:9999px;min-height:32px;display:inline-flex;align-items:center}.ds-nav-i.ds-on{background:#F6E9EC;color:#7A1F33}.ds-nav-plus{width:52px;height:52px;border:0;border-radius:16px;background:#7A1F33;color:#fff;font-size:28px;box-shadow:0 6px 16px rgba(122,31,51,.28);cursor:pointer}.ds-nav-plus:hover{background:#5E1626}"
+    }
+  ],
+  "narrative": {
+    "northStar": "La sala apparecchiata",
+    "overview": "L’app deve somigliare a una sala pronta un’ora prima degli ospiti: tovaglie stese, ogni cosa al suo posto, nessun oggetto di troppo. Lo sfondo è un lino caldo, le schede sono tovaglie bianche appena separate da una cucitura sottile, e il bordeaux compare come il vino nei calici: poco, dove conta. L’eleganza viene dall’ordine e dallo spazio, non dalla decorazione.\n\nÈ uno strumento di lavoro (modalità Operate): si usa col pollice, in piedi, spesso all’aperto o in una location semivuota. Per questo la raffinatezza resta sotto la leggibilità: testi scuri e caldi, contrasto pieno, aree da toccare grandi anche quando sembrano leggere. Lo stato di ogni cosa (confermato, in attesa, mancante) si legge prima di aprirla, sempre con una parola accanto al colore.\n\nOgni area dell’app tiene la sua icona e la sua tinta, ma in versione tenue: le tinte riconoscono, il bordeaux comanda.",
+    "keyCharacteristics": [
+      "Fondo lino caldo, schede bianche, cuciture sottili al posto di ombre e anelli.",
+      "Un solo colore d’azione, il bordeaux; tinte delle aree tenui e mai in competizione.",
+      "Un solo carattere senza grazie in tutta l’app, con pesi misurati.",
+      "Componenti leggeri ma con aree da toccare di almeno 44 px.",
+      "Stati sempre con parola + colore, mai solo colore."
+    ],
+    "rules": [
+      {
+        "name": "The Wine Glass Rule",
+        "body": "Il bordeaux è il vino nel calice: occupa meno del 10% di una schermata. Un solo pulsante bordeaux per schermata; il resto è secondario o tranquillo.",
+        "section": "colors"
+      },
+      {
+        "name": "The Word-With-Color Rule",
+        "body": "Ogni stato colorato porta la sua parola (“Confermato”, “Mancano 4”, “Non disp.”). Il colore conferma, la parola informa.",
+        "section": "colors"
+      },
+      {
+        "name": "The Quiet Tint Rule",
+        "body": "Le tinte delle aree (eventi, personale, sopralluoghi, preventivi…) restano su fondi pallidi dietro le icone; non diventano mai pulsanti, testi lunghi o fondi di sezione.",
+        "section": "colors"
+      },
+      {
+        "name": "The Twelve Floor Rule",
+        "body": "Nessun testo sotto i 12 px, nemmeno etichette o note.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Money Rule",
+        "body": "Euro, ore e conteggi usano cifre tabulari, così le colonne si allineano.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Tablecloth Rule",
+        "body": "Schede e riquadri non hanno ombra a riposo. Se serve distinguere, si usa la cucitura o un fondo più chiaro, mai un’ombra in più.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** usare il bordeaux (#7A1F33) per un solo pulsante principale per schermata.",
+      "**Do** separare le schede con la cucitura (#E8E2DA) su fondo lino (#FAF8F5), senza ombre.",
+      "**Do** accompagnare ogni colore di stato con la sua parola.",
+      "**Do** tenere le aree da toccare a 44 px anche per link e icone.",
+      "**Do** usare cifre tabulari per euro, ore e conteggi."
+    ],
+    "donts": [
+      "**Don't** usare gradienti viola/indaco, testo sfumato o vetro smerigliato decorativo.",
+      "**Don't** usare emoji come icone nell’interfaccia (📍, 🍽️, 🍸): servono icone disegnate.",
+      "**Don't** mettere bordi colorati laterali su schede, avvisi o righe di elenco.",
+      "**Don't** scendere sotto i 12 px di testo.",
+      "**Don't** mettere etichette in maiuscoletto sopra i titoli di pagina: il titolo basta."
+    ]
+  }
+}
