@@ -48,7 +48,7 @@ export function Layout() {
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 overflow-y-auto border-r border-slate-200 bg-white md:flex md:flex-col print:hidden">
         <div className="flex items-start justify-between gap-2 px-5 pt-5 pb-3">
           <Link to="/" className="flex min-w-0 items-center gap-2.5">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white">
               <Icona nome="eventi" className="h-5 w-5" />
             </span>
             <span className="min-w-0">
@@ -86,7 +86,7 @@ export function Layout() {
         {/* Barra superiore su telefono */}
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-1.5 backdrop-blur md:hidden print:hidden">
           <Link to="/" className="flex items-center gap-2 font-semibold">
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-white">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-brand-600 text-white">
               <Icona nome="eventi" className="h-4 w-4" />
             </span>
             Gestionale Eventi
@@ -109,7 +109,7 @@ export function Layout() {
                   type="button"
                   onClick={() => setNuovoAperto(true)}
                   aria-label="Crea nuovo"
-                  className="-mt-5 mb-1 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/30 active:scale-95"
+                  className="-mt-5 mb-1 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-[0_6px_16px_rgba(122,31,51,0.28)] hover:bg-brand-700 active:scale-95"
                 >
                   <Icona nome="piu" className="h-7 w-7" />
                 </button>
@@ -119,11 +119,11 @@ export function Layout() {
                 <NavLink
                   to={v.to}
                   end={v.to === '/'}
-                  className={({ isActive }) => `flex flex-col items-center gap-0.5 pt-2 pb-1 text-xs font-medium ${isActive ? 'text-indigo-700' : 'text-slate-500'}`}
+                  className={({ isActive }) => `flex flex-col items-center gap-0.5 pt-2 pb-1 text-xs font-medium ${isActive ? 'text-brand-700' : 'text-slate-500'}`}
                 >
                   {({ isActive }) => (
                     <>
-                      <span className={`inline-flex h-7 w-12 items-center justify-center rounded-full ${isActive ? 'bg-indigo-100' : ''}`}>
+                      <span className={`inline-flex h-7 w-12 items-center justify-center rounded-full ${isActive ? 'bg-brand-100' : ''}`}>
                         <Icona nome={v.icona} />
                       </span>
                       {v.etichetta}

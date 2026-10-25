@@ -6,6 +6,7 @@ import { messaggioErrore, supabase } from '../lib/supabase'
 import { oppureErrore } from '../lib/useDati'
 import type { ZonaSopralluogo } from '../lib/zone'
 import { Avviso, Bottone, Scheda } from './ui'
+import { Icona } from './aree'
 
 /**
  * Propone le voci del preventivo dal sopralluogo collegato: personale calcolato dai coperti,
@@ -67,7 +68,7 @@ export function PropostaDaSopralluogo({ sopralluogoId, ospiti, regole, giaPresen
     return (
       <Scheda className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-slate-600">Calcola personale, arredi e allestimenti dal sopralluogo collegato.</p>
-        <Bottone className="min-h-10 text-sm" caricamento={caricamento} onClick={() => void calcola()}>✨ Proponi voci dal sopralluogo</Bottone>
+        <Bottone className="min-h-10 text-sm" caricamento={caricamento} onClick={() => void calcola()}><Icona nome="scintille" className="h-4 w-4" />Proponi voci dal sopralluogo</Bottone>
         {errore && <div className="w-full"><Avviso>{errore}</Avviso></div>}
       </Scheda>
     )

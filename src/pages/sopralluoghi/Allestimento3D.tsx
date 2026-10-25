@@ -14,6 +14,7 @@ import { Scena3D, type Modo, type Vista } from '../../lib/scena3d'
 import { messaggioErrore, supabase } from '../../lib/supabase'
 import type { FileSopralluogo, Sopralluogo } from '../../lib/types'
 import { oppureErrore, useDati } from '../../lib/useDati'
+import { Icona } from '../../components/aree'
 
 type Pannello = 'arredi' | 'modelli' | 'stanza' | 'riepilogo'
 const CATEGORIE: CategoriaArredo[] = ['Tavoli', 'Sedute', 'Cerimonia', 'Servizio', 'Intrattenimento', 'Aziendale', 'Decoro', 'Esterno']
@@ -346,7 +347,7 @@ function EditorAllestimento({ s, file, url, ricarica }: {
           <div className="pointer-events-auto flex gap-2">
             <BottoneMappa onClick={annulla} disabled={!storia.length} etichetta="Annulla (Ctrl+Z)">↶</BottoneMappa>
             <Bottone variante="secondario" className="min-h-10 px-3 text-sm shadow-sm" aria-label="Rendering finale" title="Rendering finale" onClick={apriRenderingFinale} disabled={!allestimento.oggetti.length && !allestimento.pareti.punti.length}>
-              ✨<span className="hidden sm:inline"> Rendering</span>
+              <Icona nome="scintille" className="h-4 w-4" /><span className="hidden sm:inline"> Rendering</span>
             </Bottone>
             <Bottone className="min-h-10 px-3 text-sm shadow-sm" caricamento={salvataggio} disabled={!modificato} onClick={() => void salva()}>
               {modificato ? 'Salva' : 'Salvato'}
@@ -366,7 +367,7 @@ function EditorAllestimento({ s, file, url, ricarica }: {
           <BottoneMappa onClick={() => scena.current?.inquadra()} etichetta="Inquadra la sala">⤢</BottoneMappa>
           <BottoneMappa onClick={() => setAggancio((v) => !v)} attivo={aggancio} etichetta="Griglia e aggancio a 25 cm">#</BottoneMappa>
           <BottoneMappa onClick={() => setNumeri((v) => !v)} attivo={numeri} etichetta="Numeri dei tavoli">T1</BottoneMappa>
-          <BottoneMappa onClick={() => void scattaRender()} etichetta="Render realistico di questa vista">📷</BottoneMappa>
+          <BottoneMappa onClick={() => void scattaRender()} etichetta="Render realistico di questa vista"><Icona nome="fotocamera" className="h-5 w-5" /></BottoneMappa>
         </div>
 
         {/* Messaggi e istruzioni */}
@@ -433,7 +434,7 @@ function EditorAllestimento({ s, file, url, ricarica }: {
               )}
               <div className="ml-auto flex gap-2">
                 <BottonePiccolo onClick={() => modificaOggetto(oggetto.id, { bloccato: !oggetto.bloccato })} etichetta={oggetto.bloccato ? 'Sblocca' : 'Blocca'}>
-                  {oggetto.bloccato ? '🔒 Sblocca' : 'Blocca'}
+                  {oggetto.bloccato ? 'Sblocca' : 'Blocca'}
                 </BottonePiccolo>
                 <BottonePiccolo onClick={duplica} etichetta="Duplica">Duplica</BottonePiccolo>
                 <BottonePiccolo onClick={elimina} etichetta="Elimina" pericolo>Elimina</BottonePiccolo>

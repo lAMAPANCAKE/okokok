@@ -9,6 +9,8 @@ import { formatData, oggiIso } from '../../lib/format'
 import { messaggioErrore, supabase } from '../../lib/supabase'
 import { CHECKLIST_SOPRALLUOGO, type Azienda, type EsitoVoceChecklist, type Evento, type FileSopralluogo, type Sopralluogo, type VoceChecklist } from '../../lib/types'
 import { oppureErrore, useDati } from '../../lib/useDati'
+import { Icona } from '../../components/aree'
+import { ICONA_ZONA } from '../../lib/aree'
 
 const MAX_FILE = 15 * 1024 * 1024
 
@@ -385,8 +387,8 @@ export default function SopralluogoDettaglio() {
             <p className="mb-2 text-sm font-medium">Che zona vuoi aggiungere?</p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {TIPI_ZONA.map((t) => (
-                <button key={t.tipo} disabled={creazioneZona} onClick={() => void nuovaZona(t.tipo)} className="min-h-12 rounded-xl px-3 text-left text-sm font-medium ring-1 ring-slate-300 hover:bg-slate-50 disabled:opacity-50">
-                  {t.icona} {t.nome}
+                <button key={t.tipo} disabled={creazioneZona} onClick={() => void nuovaZona(t.tipo)} className="flex min-h-12 items-center gap-2 rounded-xl px-3 text-left text-sm font-medium ring-1 ring-slate-300 hover:bg-slate-50 disabled:opacity-50">
+                  <Icona nome={ICONA_ZONA[t.tipo] ?? 'pin'} className="h-5 w-5 shrink-0 text-slate-600" />{t.nome}
                 </button>
               ))}
             </div>
@@ -422,7 +424,7 @@ export default function SopralluogoDettaglio() {
             {zoneInCoda.map((o) => o.tipo === 'zona' && (
               <li key={o.id}>
                 <Link to={`/sopralluoghi/${id}/zone/${o.riga.id}`} className="flex items-center gap-3 rounded-2xl bg-white p-2 ring-1 ring-amber-300">
-                  <span className="flex h-16 w-20 items-center justify-center rounded-xl bg-amber-50 text-2xl">{tipoZona(o.riga.tipo).icona}</span>
+                  <span className="flex h-16 w-20 items-center justify-center rounded-xl bg-amber-50 text-amber-800"><Icona nome={ICONA_ZONA[o.riga.tipo] ?? 'pin'} className="h-7 w-7" /></span>
                   <span className="min-w-0">
                     <span className="block truncate font-medium">{o.riga.nome}</span>
                     <span className="block text-xs text-amber-700">In attesa di rete</span>

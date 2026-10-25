@@ -10,6 +10,8 @@ import { scaricaPdfListaCarico } from '../../lib/pdfListaCarico'
 import { messaggioErrore, supabase } from '../../lib/supabase'
 import type { Evento } from '../../lib/types'
 import { oppureErrore, useDati } from '../../lib/useDati'
+import { ChipIcona } from '../../components/aree'
+import { ICONA_REPARTO } from '../../lib/aree'
 import type { ZonaSopralluogo } from '../../lib/zone'
 
 const listaVuota = (eventoId: string): Lista => ({ evento_id: eventoId, voci: [], coperti: null, ospiti: null, scorta_pct: 10 })
@@ -154,7 +156,7 @@ export default function ListaCarico() {
               <Input type="number" inputMode="numeric" min={0} max={100} className="min-h-10" value={lista.scorta_pct} onChange={(e) => cambia({ scorta_pct: Math.min(100, numero(e.target.value) ?? 0) })} />
             </label>
           </div>
-          <Bottone className="w-full" onClick={genera}>{lista.voci.length ? '↻ Aggiorna dalla sala, dal menù e dalle zone' : '✨ Calcola dalla sala, dal menù e dalle zone'}</Bottone>
+          <Bottone className="w-full" onClick={genera}>{lista.voci.length ? '↻ Aggiorna dalla sala, dal menù e dalle zone' : 'Calcola dalla sala, dal menù e dalle zone'}</Bottone>
           <p className="text-xs text-slate-500">
             {dati.allestimento ? `Sala 3D collegata: ${dati.copertiSala} coperti.` : 'Nessun allestimento 3D collegato: tavoli e sedie vanno aggiunti a mano.'}{' '}
             {dati.menu.length ? `Menù dall’ordine di servizio (${dati.menu.length} piatti).` : <>Senza menù si calcola un servizio classico (antipasto, primo, secondo, dolce): <Link to={`/eventi/${id}/ordine`} className="text-brand-700 underline">compila il menù</Link>.</>}
@@ -178,14 +180,14 @@ export default function ListaCarico() {
         </div>
       )}
 
-      {REPARTI.map(({ reparto, nome, icona, descrizione }) => {
+      {REPARTI.map(({ reparto, nome, descrizione }) => {
         const tutte = lista.voci.filter((v) => v.reparto === reparto)
         const voci = soloDaCaricare ? tutte.filter((v) => !v.caricato) : tutte
         if (!tutte.length && !isStaff) return null
         return (
           <section key={reparto} className="mb-4">
-            <h2 className="mb-1 text-lg font-semibold">
-              {icona} {nome} <span className="text-sm font-normal text-slate-500">· {descrizione}{tutte.length ? ` · ${tutte.filter((v) => v.caricato).length}/${tutte.length}` : ''}</span>
+            <h2 className="mb-1 flex flex-wrap items-center gap-x-2 text-lg font-semibold">
+              <ChipIcona icona={ICONA_REPARTO[reparto]} colore="slate" piccola />{nome} <span className="text-sm font-normal text-slate-500">· {descrizione}{tutte.length ? ` · ${tutte.filter((v) => v.caricato).length}/${tutte.length}` : ''}</span>
             </h2>
             <Scheda className="space-y-1 p-2">
               {voci.map((v) => (

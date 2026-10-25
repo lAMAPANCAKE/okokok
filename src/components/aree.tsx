@@ -31,7 +31,7 @@ export function Tessera({ to, icona, colore, etichetta, descrizione, badge, alle
   return (
     <Link
       to={to}
-      className="group relative flex min-h-24 flex-col justify-between gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-slate-300 active:translate-y-0 active:bg-slate-50"
+      className="group relative flex min-h-24 flex-col justify-between gap-3 rounded-2xl bg-white p-3 ring-1 ring-slate-200 transition-colors hover:ring-slate-300 active:bg-slate-50"
     >
       <div className="flex items-start justify-between gap-2">
         <ChipIcona icona={icona} colore={colore} />

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Icona } from './aree'
 
 // Riconoscimento vocale del browser (Chrome Android lo supporta in italiano).
 // Tipi minimi: l'API non è ancora nelle definizioni standard di TypeScript.
@@ -78,7 +79,7 @@ export function Dettatura({ onTesto, className = '' }: { onTesto: (testo: string
         aria-pressed={ascolto}
         className={`inline-flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-medium ring-1 ${ascolto ? 'bg-red-600 text-white ring-red-600' : 'bg-white text-slate-700 ring-slate-300'}`}
       >
-        {ascolto ? <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-white" /> : '🎤'}
+        {ascolto ? <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-white" /> : <Icona nome="microfono" className="h-5 w-5" />}
         {ascolto ? 'Sto ascoltando… tocca per fermare' : 'Detta'}
       </button>
       {parziale && <p className="mt-1 text-sm text-slate-500 italic">{parziale}</p>}

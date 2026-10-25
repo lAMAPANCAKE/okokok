@@ -5,7 +5,7 @@ import type { StatoEvento, StatoTurno } from '../lib/types'
 type Variante = 'primario' | 'secondario' | 'pericolo' | 'fantasma'
 
 const stiliVariante: Record<Variante, string> = {
-  primario: 'bg-slate-900 text-white hover:bg-slate-800 disabled:bg-slate-400',
+  primario: 'bg-brand-600 text-white hover:bg-brand-700 disabled:bg-slate-300 disabled:text-slate-600',
   secondario: 'bg-white text-slate-900 ring-1 ring-slate-300 hover:bg-slate-50 disabled:text-slate-400',
   pericolo: 'bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300',
   fantasma: 'text-slate-700 hover:bg-slate-100 disabled:text-slate-400',
@@ -57,12 +57,12 @@ export function AreaTesto(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
 }
 
 export function Scheda({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 ${className}`}>{children}</div>
+  return <div className={`rounded-2xl bg-white p-4 ring-1 ring-slate-200 ${className}`}>{children}</div>
 }
 
 export function SchedaLink({ to, children }: { to: string; children: ReactNode }) {
   return (
-    <Link to={to} className="block rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 transition hover:ring-slate-300 active:bg-slate-50">
+    <Link to={to} className="block rounded-2xl bg-white p-4 ring-1 ring-slate-200 transition-colors hover:ring-slate-300 active:bg-slate-50">
       {children}
     </Link>
   )

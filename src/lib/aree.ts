@@ -24,21 +24,39 @@ export const TRACCIATI = {
   carico: 'M3 6h11v10H3zM14 9h4l3 3v4h-7M7.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM17.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z',
   sala3d: 'M12 3 4 7.5v9L12 21l8-4.5v-9zM4 7.5 12 12l8-4.5M12 12v9',
   piu: 'M12 5v14M5 12h14',
+  // Zone del sopralluogo, reparti della lista di carico e azioni
+  calice: 'M7 3h10l-.5 5a4.5 4.5 0 0 1-9 0zM12 12.5V20M8 21h8',
+  piatto: 'M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 4v5a1.5 1.5 0 0 0 3 0V4M4.5 9v11M20 4c-1.5 1-2 3-2 5h2v11',
+  cloche: 'M4 17h16M12 7a8 8 0 0 0-8 8v2h16v-2a8 8 0 0 0-8-8zM12 5v2M3 20h18',
+  cesto: 'M4 10h16l-1.5 9a1.5 1.5 0 0 1-1.5 1.3H7a1.5 1.5 0 0 1-1.5-1.3zM8 10l3-6M16 10l-3-6M9 14v3M12 14v3M15 14v3',
+  porta: 'M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17M3 21h18M14.5 12h.01',
+  cucina: 'M7 14h10v6a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1zM7 14a4 4 0 0 1-.6-7.96A5 5 0 0 1 16 5a4 4 0 0 1 1 9M10 17h4',
+  stella: 'M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z',
+  foglia: 'M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19l7-7',
+  pin: 'M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
+  rotolo: 'M7 4h10a3 3 0 0 1 3 3v10H7M7 4a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h13v-3M7 4a3 3 0 0 1 3 3v13M7 9.5h.01',
+  scintille: 'M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z',
+  microfono: 'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3M9 21h6',
+  fotocamera: 'M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+  sole: 'M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4',
+  luna: 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z',
+  lucchetto: 'M6 11h12v9a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zM8.5 11V7.5a3.5 3.5 0 0 1 7 0V11',
 } as const
 
 export type NomeIcona = keyof typeof TRACCIATI
 
-export // Classi complete (Tailwind le legge così come sono scritte)
-const COLORI = {
-  indigo: 'bg-indigo-100 text-indigo-700',
-  emerald: 'bg-emerald-100 text-emerald-700',
-  orange: 'bg-orange-100 text-orange-700',
-  sky: 'bg-sky-100 text-sky-700',
-  violet: 'bg-violet-100 text-violet-700',
-  teal: 'bg-teal-100 text-teal-700',
-  green: 'bg-green-100 text-green-700',
-  amber: 'bg-amber-100 text-amber-800',
-  rose: 'bg-rose-100 text-rose-700',
+// Tinte tenui delle aree (classi complete: Tailwind le legge così come sono scritte).
+// Riconoscono l'area senza competere con il bordeaux delle azioni (DESIGN.md, The Quiet Tint Rule).
+export const COLORI = {
+  vino: 'bg-brand-50 text-brand-700',
+  emerald: 'bg-emerald-50 text-emerald-800',
+  orange: 'bg-orange-50 text-orange-800',
+  sky: 'bg-sky-50 text-sky-800',
+  prugna: 'bg-purple-50 text-purple-800',
+  teal: 'bg-teal-50 text-teal-800',
+  green: 'bg-lime-50 text-lime-800',
+  amber: 'bg-amber-50 text-amber-800',
+  rose: 'bg-rose-50 text-rose-800',
   slate: 'bg-slate-100 text-slate-700',
 } as const
 export type Colore = keyof typeof COLORI
@@ -65,13 +83,13 @@ const collaboratore = (r: Ruoli) => !r.isStaff
 const tutti = () => true
 
 export const AREE: Area[] = [
-  { chiave: 'eventi', to: '/eventi', etichetta: 'Eventi', descrizione: 'Calendario, turni e squadra', icona: 'eventi', colore: 'indigo', gruppo: 'Operativo', visibile: staff },
+  { chiave: 'eventi', to: '/eventi', etichetta: 'Eventi', descrizione: 'Calendario, turni e squadra', icona: 'eventi', colore: 'vino', gruppo: 'Operativo', visibile: staff },
   { chiave: 'personale', to: '/disponibilita-personale', etichetta: 'Personale', descrizione: 'Chi è libero, impegnato o assente', icona: 'utenti', colore: 'emerald', gruppo: 'Operativo', visibile: staff },
   { chiave: 'sopralluoghi', to: '/sopralluoghi', etichetta: 'Sopralluoghi', descrizione: 'Foto, zone, sala 3D e rendering', icona: 'sopralluoghi', colore: 'orange', gruppo: 'Operativo', visibile: staff },
   { chiave: 'clienti', to: '/crm', etichetta: 'Clienti', descrizione: 'Aziende, trattative e richiami', icona: 'clienti', colore: 'sky', gruppo: 'Commerciale', visibile: staff },
-  { chiave: 'preventivi', to: '/preventivi', etichetta: 'Preventivi', descrizione: 'Voci, margini e PDF', icona: 'preventivi', colore: 'violet', gruppo: 'Commerciale', visibile: staff },
+  { chiave: 'preventivi', to: '/preventivi', etichetta: 'Preventivi', descrizione: 'Voci, margini e PDF', icona: 'preventivi', colore: 'prugna', gruppo: 'Commerciale', visibile: staff },
   { chiave: 'report', to: '/report', etichetta: 'Margini', descrizione: 'Ricavi e costi per evento', icona: 'report', colore: 'teal', gruppo: 'Commerciale', visibile: staff },
-  { chiave: 'turni', to: '/turni', etichetta: 'Turni', descrizione: 'I tuoi turni da confermare e in programma', icona: 'turni', colore: 'indigo', gruppo: 'Il mio lavoro', visibile: collaboratore },
+  { chiave: 'turni', to: '/turni', etichetta: 'Turni', descrizione: 'I tuoi turni da confermare e in programma', icona: 'turni', colore: 'vino', gruppo: 'Il mio lavoro', visibile: collaboratore },
   { chiave: 'disponibilita', to: '/disponibilita', etichetta: 'Disponibilità', descrizione: 'Segna i giorni in cui non ci sei', icona: 'assenze', colore: 'emerald', gruppo: 'Il mio lavoro', visibile: collaboratore },
   { chiave: 'compensi', to: '/compensi', etichetta: 'Compensi', descrizione: 'Ore lavorate e compensi', icona: 'compensi', colore: 'green', gruppo: 'Amministrazione', visibile: tutti },
   { chiave: 'rimborsi', to: '/rimborsi', etichetta: 'Rimborsi', descrizione: 'Trasferte e spese', icona: 'rimborsi', colore: 'amber', gruppo: 'Amministrazione', visibile: tutti },
@@ -99,8 +117,18 @@ export function areeVisibili(r: Ruoli) {
 
 /** Azioni "Nuovo …" del pulsante + (solo staff) */
 export const AZIONI_NUOVO: { to: string; etichetta: string; descrizione: string; icona: NomeIcona; colore: Colore }[] = [
-  { to: '/eventi/nuovo', etichetta: 'Nuovo evento', descrizione: 'Data, luogo e personale richiesto', icona: 'eventi', colore: 'indigo' },
+  { to: '/eventi/nuovo', etichetta: 'Nuovo evento', descrizione: 'Data, luogo e personale richiesto', icona: 'eventi', colore: 'vino' },
   { to: '/sopralluoghi/nuovo', etichetta: 'Nuovo sopralluogo', descrizione: 'Foto, zone e sala 3D in location', icona: 'sopralluoghi', colore: 'orange' },
-  { to: '/preventivi/nuovo', etichetta: 'Nuovo preventivo', descrizione: 'Anche dal sopralluogo', icona: 'preventivi', colore: 'violet' },
+  { to: '/preventivi/nuovo', etichetta: 'Nuovo preventivo', descrizione: 'Anche dal sopralluogo', icona: 'preventivi', colore: 'prugna' },
   { to: '/crm/nuova', etichetta: 'Nuovo cliente', descrizione: 'Azienda o privato', icona: 'clienti', colore: 'sky' },
 ]
+
+/** Icona disegnata per ogni tipo di zona del sopralluogo */
+export const ICONA_ZONA: Record<string, NomeIcona> = {
+  bar: 'calice', sala: 'piatto', buffet: 'cloche', sbarazzo: 'cesto', back: 'porta', cucina: 'cucina', ingresso: 'stella', esterno: 'foglia', altro: 'pin',
+}
+
+/** Icona disegnata per ogni reparto della lista di carico */
+export const ICONA_REPARTO: Record<string, NomeIcona> = {
+  sala: 'piatto', bar: 'calice', cucina: 'cucina', allestimento: 'scintille', consumabili: 'rotolo',
+}
