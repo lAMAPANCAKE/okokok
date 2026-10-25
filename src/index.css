@@ -1,12 +1,35 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/plus-jakarta-sans';
 
+/*
+ * Stile "La sala apparecchiata" (vedi DESIGN.md): fondo lino, schede bianche,
+ * neutri caldi al posto dell'ardesia fredda e bordeaux come unico colore d'azione.
+ * Le scale slate e brand sono ridefinite qui, così tutta l'app cambia da un punto solo.
+ */
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --color-brand-50: #f0f9ff;
-  --color-brand-100: #e0f2fe;
-  --color-brand-500: #0ea5e9;
-  --color-brand-600: #0284c7;
-  --color-brand-700: #0369a1;
+  --font-sans: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* Neutri caldi: lino, cuciture, inchiostro */
+  --color-slate-50: #faf8f5;
+  --color-slate-100: #f3efea;
+  --color-slate-200: #e8e2da;
+  --color-slate-300: #d3cac0;
+  --color-slate-400: #9c928a;
+  --color-slate-500: #6e655e;
+  --color-slate-600: #5f5650;
+  --color-slate-700: #463f3a;
+  --color-slate-800: #2e2824;
+  --color-slate-900: #1f1a17;
+  --color-slate-950: #15110f;
+
+  /* Bordeaux */
+  --color-brand-50: #fbf4f5;
+  --color-brand-100: #f6e9ec;
+  --color-brand-200: #edd0d7;
+  --color-brand-500: #a0344d;
+  --color-brand-600: #7a1f33;
+  --color-brand-700: #5e1626;
+  --color-brand-800: #4a1220;
 }
 
 html {
@@ -15,6 +38,25 @@ html {
 
 body {
   @apply bg-slate-50 text-slate-900 antialiased;
+}
+
+::selection {
+  background: var(--color-brand-100);
+  color: var(--color-brand-700);
+}
+
+:focus-visible {
+  outline-color: var(--color-brand-600);
+}
+
+input[type='checkbox'],
+input[type='radio'],
+progress {
+  accent-color: var(--color-brand-600);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Spazio per la barra di navigazione inferiore e per la "home bar" degli iPhone */

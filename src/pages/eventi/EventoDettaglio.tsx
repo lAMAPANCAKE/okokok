@@ -113,7 +113,7 @@ export default function EventoDettaglio() {
       <section aria-label="Strumenti dell'evento" className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         <Tessera to={`/eventi/${id}/gruppo`} icona="gruppo" colore="emerald" etichetta="Gruppo di lavoro" descrizione="Squadra, ritrovo e divisa"
           badge={dati.copertura?.richiesti ? `${dati.copertura.confermati}/${dati.copertura.richiesti}` : undefined} allerta={(dati.copertura?.mancanti ?? 0) > 0} />
-        <Tessera to={`/eventi/${id}/ordine`} icona="ordine" colore="indigo" etichetta="Ordine di servizio" descrizione="Scaletta, menù e allergeni"
+        <Tessera to={`/eventi/${id}/ordine`} icona="ordine" colore="vino" etichetta="Ordine di servizio" descrizione="Scaletta, menù e allergeni"
           badge={dati.haOrdine ? undefined : 'da fare'} />
         <Tessera to={`/eventi/${id}/carico`} icona="carico" colore="amber" etichetta="Lista di carico" descrizione="Cosa caricare, per reparto"
           badge={dati.carico ? `${dati.carico.caricate}/${dati.carico.totale}` : 'da fare'} />
@@ -321,7 +321,7 @@ function ModuloAssegnazione({
             ))}
           </Select>
         </Campo>
-        <Campo etichetta="Collaboratore" aiuto="⚠ = già impegnato quel giorno · ★ = media valutazioni · 🚫 = non disponibile">
+        <Campo etichetta="Collaboratore" aiuto="⚠ = già impegnato quel giorno · ★ = media valutazioni · (non disp.) = non disponibile">
           <Select required value={collaboratoreId} onChange={(e) => scegli(e.target.value)}>
             <option value="">Scegli…</option>
             {[
@@ -333,7 +333,7 @@ function ModuloAssegnazione({
                 <optgroup key={g.etichetta} label={g.etichetta}>
                   {g.persone.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {indisponibili.has(p.id) ? '🚫 ' : impegnati.has(p.id) ? '⚠ ' : ''}
+                      {indisponibili.has(p.id) ? '(non disp.) ' : impegnati.has(p.id) ? '⚠ ' : ''}
                       {nomeCompleto(p)}
                       {medie.get(p.id) ? ` ★${String(medie.get(p.id)!.media).replace('.', ',')}` : ''}
                       {p.competenze.length ? ` — ${p.competenze.join(', ')}` : ''}

@@ -9,6 +9,7 @@ import { messaggioErrore, supabase } from '../../lib/supabase'
 import type { FileSopralluogo, Sopralluogo } from '../../lib/types'
 import { oppureErrore, useDati } from '../../lib/useDati'
 import { CONSIGLI_SCATTO, CONSIGLI_SCATTO_GENERALI, STILI, TIPI_ZONA, istruzioneRendering, tipoZona, type StileZona, type TipoZona, type ZonaSopralluogo } from '../../lib/zone'
+import { Icona } from '../../components/aree'
 
 type Modulo = Pick<ZonaSopralluogo, 'nome' | 'tipo' | 'voci' | 'stile'> & { descrizione: string; note_operative: string }
 type OpFoto = Extract<Operazione, { tipo: 'foto' }>
@@ -173,7 +174,7 @@ export default function ZonaDettaglio() {
 
   return (
     <>
-      <Intestazione titolo={`${info.icona} ${form.nome || info.nome}`} sottotitolo={dati.sopralluogo?.titolo ?? 'Zona del sopralluogo'} indietro={`/sopralluoghi/${id}`} />
+      <Intestazione titolo={form.nome || info.nome} sottotitolo={dati.sopralluogo?.titolo ?? 'Zona del sopralluogo'} indietro={`/sopralluoghi/${id}`} />
       {dati.offline && <div className="mb-3"><Avviso tipo="info">Sei senza rete: foto e modifiche si salvano sul telefono e partono appena torna il segnale.</Avviso></div>}
       {messaggio && <div className="mb-3" onClick={() => setMessaggio(null)}><Avviso tipo={messaggio.tipo}>{messaggio.testo}</Avviso></div>}
 
@@ -184,7 +185,7 @@ export default function ZonaDettaglio() {
           </Campo>
           <Campo etichetta="Tipo">
             <Select value={form.tipo} onChange={(e) => imposta({ tipo: e.target.value as TipoZona })}>
-              {TIPI_ZONA.map((t) => <option key={t.tipo} value={t.tipo}>{t.icona} {t.nome}</option>)}
+              {TIPI_ZONA.map((t) => <option key={t.tipo} value={t.tipo}>{t.nome}</option>)}
             </Select>
           </Campo>
         </div>
@@ -194,11 +195,11 @@ export default function ZonaDettaglio() {
       <section className="mb-4">
         <div className="mb-2 flex items-center justify-between gap-2">
           <h2 className="text-lg font-semibold">Foto della location ({originali.length + fotoInCoda.filter((o) => o.riga.tipo === 'foto').length})</h2>
-          <Bottone variante="secondario" className="min-h-10 text-sm" caricamento={caricamentoFoto} onClick={() => inputFoto.current?.click()}>📷 Scatta o carica</Bottone>
+          <Bottone variante="secondario" className="min-h-10 text-sm" caricamento={caricamentoFoto} onClick={() => inputFoto.current?.click()}><Icona nome="fotocamera" className="h-4 w-4" />Scatta o carica</Bottone>
           <input ref={inputFoto} type="file" accept="image/*" multiple hidden onChange={(e) => void caricaFoto(e.target.files, { tipo: 'foto' })} />
         </div>
         <details className="mb-3 rounded-xl bg-sky-50 px-3 py-2 text-sm text-sky-900 ring-1 ring-sky-100" open={originali.length === 0}>
-          <summary className="cursor-pointer font-medium">📸 Come fotografare {form.tipo === 'altro' ? 'la zona' : `la zona ${info.nome.toLowerCase()}`}</summary>
+          <summary className="cursor-pointer font-medium">Come fotografare {form.tipo === 'altro' ? 'la zona' : `la zona ${info.nome.toLowerCase()}`}</summary>
           <p className="mt-2 font-medium">{CONSIGLI_SCATTO[form.tipo]}</p>
           <ul className="mt-1 list-disc space-y-0.5 pl-5">
             {CONSIGLI_SCATTO_GENERALI.map((c) => <li key={c}>{c}</li>)}
@@ -217,7 +218,7 @@ export default function ZonaDettaglio() {
                       <img src={dati.url.get(f.file_path)} alt="Foto della zona" loading="lazy" className="aspect-[4/3] w-full object-cover" />
                     </a>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Bottone className="min-h-10 flex-1 text-sm" onClick={() => setGenerazione(f)}>✨ Genera con ChatGPT</Bottone>
+                      <Bottone className="min-h-10 flex-1 text-sm" onClick={() => setGenerazione(f)}><Icona nome="scintille" className="h-4 w-4" />Genera con ChatGPT</Bottone>
                       <Bottone variante="fantasma" className="min-h-10 text-sm text-red-700" onClick={() => void eliminaFoto(f)} aria-label="Elimina foto">Elimina</Bottone>
                     </div>
                     {suoi.length > 0 && <p className="text-xs text-slate-500">{suoi.length} rendering · vedi sotto</p>}
@@ -297,9 +298,9 @@ export default function ZonaDettaglio() {
                   role="radio"
                   aria-checked={form.stile.momento === m}
                   onClick={() => impostaStile({ momento: form.stile.momento === m ? undefined : m })}
-                  className={`min-h-12 rounded-xl text-sm font-medium ring-1 ${form.stile.momento === m ? 'bg-slate-900 text-white ring-slate-900' : 'bg-white text-slate-700 ring-slate-300'}`}
+                  className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl text-sm font-medium ring-1 ${form.stile.momento === m ? 'bg-slate-900 text-white ring-slate-900' : 'bg-white text-slate-700 ring-slate-300'}`}
                 >
-                  {m === 'giorno' ? '☀️ Giorno' : '🌙 Sera'}
+                  <Icona nome={m === 'giorno' ? 'sole' : 'luna'} className="h-4 w-4" />{m === 'giorno' ? 'Giorno' : 'Sera'}
                 </button>
               ))}
             </div>
@@ -321,7 +322,7 @@ export default function ZonaDettaglio() {
       <section className="mb-4">
         <h2 className="mb-2 text-lg font-semibold">Rendering ({rendering.length})</h2>
         {rendering.length === 0 ? (
-          <p className="text-sm text-slate-500">Tocca “✨ Genera con ChatGPT” su una foto: l’istruzione è già pronta. Poi carica qui l’immagine creata da ChatGPT.</p>
+          <p className="text-sm text-slate-500">Tocca “Genera con ChatGPT” su una foto: l’istruzione è già pronta. Poi carica qui l’immagine creata da ChatGPT.</p>
         ) : (
           <div className="space-y-4">
             {[...originali, null].map((o) => {
@@ -418,7 +419,7 @@ function FinestraChatGpt({ foto, url, istruzioneIniziale, caricamento, onCarica,
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-slate-950/60 sm:items-center" role="dialog" aria-modal="true" aria-label="Genera con ChatGPT">
       <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-4 sm:rounded-2xl">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">✨ Genera con ChatGPT</h2>
+          <h2 className="text-lg font-semibold">Genera con ChatGPT</h2>
           <button className="text-slate-500" onClick={onChiudi} aria-label="Chiudi">✕</button>
         </div>
         <ol className="space-y-4">

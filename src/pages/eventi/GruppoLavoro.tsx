@@ -5,6 +5,7 @@ import { caricaDisponibilita, statoDi, type Disponibilita } from '../../lib/disp
 import { formatData, formatOra, intervalloOre, nomeCompleto } from '../../lib/format'
 import { messaggioErrore, supabase } from '../../lib/supabase'
 import type { Evento, Turno } from '../../lib/types'
+import { Icona } from '../../components/aree'
 import { oppureErrore, useDati } from '../../lib/useDati'
 
 const MANSIONI = ['Cameriere di sala', 'Responsabile di sala', 'Barista', 'Cuoco', 'Aiuto cuoco', 'Lavapiatti', 'Runner', 'Hostess', 'Addetto buffet', 'Magazziniere / autista']
@@ -176,7 +177,7 @@ export default function GruppoLavoro() {
         sottotitolo={`${evento.nome} · ${formatData(evento.data, { weekday: 'long', day: 'numeric', month: 'long' })}${intervalloOre(evento.ora_inizio, evento.ora_fine) ? ' · ' + intervalloOre(evento.ora_inizio, evento.ora_fine) : ''}`}
         indietro={`/eventi/${id}`}
       />
-      {evento.luogo && <p className="-mt-2 mb-3 text-sm text-slate-600">📍 {evento.luogo}</p>}
+      {evento.luogo && <p className="-mt-2 mb-3 flex items-center gap-1.5 text-sm text-slate-600"><Icona nome="pin" className="h-4 w-4" />{evento.luogo}</p>}
       {messaggio && <div className="mb-3" onClick={() => setMessaggio(null)}><Avviso tipo={messaggio.tipo}>{messaggio.testo}</Avviso></div>}
 
       {/* Dati per lo staff */}

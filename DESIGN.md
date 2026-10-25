@@ -122,7 +122,7 @@ components:
     rounded: "{rounded.pill}"
 ---
 
-<!-- DIREZIONE SCELTA: questo file descrive lo stile verso cui portare l'app (scelto il 25/10/2026: "la sala apparecchiata", componenti leggeri, bordeaux, tutto senza grazie). Il codice oggi usa ancora indaco/viola, ardesia fredda e il font di sistema: la migrazione è da fare. Dopo la migrazione, rilanciare /impeccable document per allineare i valori al codice. -->
+<!-- Stile scelto il 25/10/2026 ("la sala apparecchiata", componenti leggeri, bordeaux, tutto senza grazie) e applicato al codice: neutri caldi e bordeaux sono definiti in src/index.css come scale slate e brand di Tailwind. -->
 
 # Design System: Gestionale Eventi
 
@@ -178,7 +178,7 @@ Una tavolozza da sala: lino, tovaglia bianca, inchiostro caldo e un bordeaux da 
 **Display Font:** nessuno distinto: i titoli usano lo stesso carattere.
 **Body Font:** Plus Jakarta Sans (con ui-sans-serif, system-ui)
 
-**Character:** un senza grazie con aperture morbide e un tocco caldo, leggibile a 12 px sul telefono e composto ai titoli. Va caricato davvero nell’app (oggi il CSS dichiara Inter ma non lo carica, quindi si vede il font di sistema).
+**Character:** un senza grazie con aperture morbide e un tocco caldo, leggibile a 12 px sul telefono e composto ai titoli. È caricato nell’app con @fontsource-variable/plus-jakarta-sans (licenza OFL).
 
 ### Hierarchy
 - **Headline** (650, 1.5rem, 1.2): titolo della pagina, uno per schermata.

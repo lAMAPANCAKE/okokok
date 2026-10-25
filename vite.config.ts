@@ -22,8 +22,8 @@ export default defineConfig(({ mode }) => {
         start_url: base,
         scope: base,
         display: 'standalone',
-        background_color: '#f8fafc',
-        theme_color: '#0f172a',
+        background_color: '#faf8f5',
+        theme_color: '#7a1f33',
         icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
       },
       workbox: {

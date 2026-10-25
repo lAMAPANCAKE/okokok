@@ -12,6 +12,7 @@ import { scaricaPdfOrdineServizio, type PersonaTurno } from '../../lib/pdfOrdine
 import { messaggioErrore, supabase } from '../../lib/supabase'
 import type { Evento, Turno } from '../../lib/types'
 import { oppureErrore, useDati } from '../../lib/useDati'
+import { Icona } from '../../components/aree'
 import type { ZonaSopralluogo } from '../../lib/zone'
 
 const nomeAllergene = (n: number) => ALLERGENI.find((a) => a.n === n)?.breve ?? String(n)
@@ -140,8 +141,8 @@ export default function OrdineServizio() {
         indietro={isStaff ? `/eventi/${id}` : '/turni'}
         azione={<Bottone variante="secondario" className="min-h-10 text-sm" onClick={() => void scaricaPdfOrdineServizio(evento, o, personale)}>PDF</Bottone>}
       />
-      {evento.luogo && <p className="-mt-2 mb-3 text-sm text-slate-600">📍 {evento.luogo}</p>}
-      <Link to={`/eventi/${id}/carico`} className="mb-3 inline-flex min-h-10 items-center rounded-xl px-3 text-sm font-medium text-brand-700 ring-1 ring-brand-100">📦 Lista di carico →</Link>
+      {evento.luogo && <p className="-mt-2 mb-3 flex items-center gap-1.5 text-sm text-slate-600"><Icona nome="pin" className="h-4 w-4" />{evento.luogo}</p>}
+      <Link to={`/eventi/${id}/carico`} className="mb-3 inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-medium text-brand-700 ring-1 ring-brand-200"><Icona nome="carico" className="h-4 w-4" />Lista di carico →</Link>
       {messaggio && <div className="mb-3" onClick={() => setMessaggio(null)}><Avviso tipo={messaggio.tipo}>{messaggio.testo}</Avviso></div>}
       {!isStaff && !dati.ordine && <Avviso tipo="info">L’ordine di servizio non è ancora pronto: lo trovi qui appena il responsabile lo compila.</Avviso>}
 
