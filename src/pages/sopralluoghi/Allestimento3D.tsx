@@ -5,6 +5,7 @@ import {
   CATALOGO, PAVIMENTI, allestimentoIniziale, lunghezzaSegmento, normalizzaAllestimento, postiOggetto, postoLibero, riepilogo, sedieMaxImperiale,
   segmentiPareti, stanzaRettangolare, voceCatalogo, type Allestimento, type CategoriaArredo, type Oggetto, type Punto,
 } from '../../lib/allestimento'
+import { compare, ingrandisce } from '../../lib/animazioni'
 import { caricaFile, linkFirmati } from '../../lib/file'
 import { formatData } from '../../lib/format'
 import { MODELLI, type Modello } from '../../lib/modelli'
@@ -593,7 +594,7 @@ function FinestraRendering({ galleria: g, titolo, onCambia, onAvvia, onPdf, onSa
         ) : (
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {g.foto.map((f, i) => (
-              <li key={i}>
+              <li key={i} ref={compare}>
                 <button className="block w-full overflow-hidden rounded-xl bg-black text-left ring-1 ring-white/10" onClick={() => onCambia({ ...g, aperta: i })}>
                   <img src={f.url} alt={f.titolo} className="aspect-video w-full object-cover" />
                   <span className="block px-3 py-2 text-sm">{f.titolo}</span>
@@ -619,7 +620,7 @@ function FinestraRendering({ galleria: g, titolo, onCambia, onAvvia, onPdf, onSa
             </div>
           </div>
           <div className="relative flex min-h-0 flex-1 items-center justify-center">
-            <img src={aperta.url} alt={aperta.titolo} className="max-h-full max-w-full object-contain" />
+            <img key={g.aperta} ref={ingrandisce} src={aperta.url} alt={aperta.titolo} className="max-h-full max-w-full object-contain" />
             {g.aperta > 0 && <button className="absolute left-1 h-12 w-12 rounded-full bg-white/15 text-2xl" onClick={() => onCambia({ ...g, aperta: g.aperta! - 1 })} aria-label="Precedente">‹</button>}
             {g.aperta < g.foto.length - 1 && <button className="absolute right-1 h-12 w-12 rounded-full bg-white/15 text-2xl" onClick={() => onCambia({ ...g, aperta: g.aperta! + 1 })} aria-label="Successiva">›</button>}
           </div>

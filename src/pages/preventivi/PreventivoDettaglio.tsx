@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { usePermessi } from '../../auth/AuthProvider'
 import { BadgePreventivo } from '../../components/commerciale'
+import { ConteggioEuro } from '../../components/Conteggio'
 import { PropostaDaSopralluogo } from '../../components/PropostaDaSopralluogo'
 import { AreaTesto, Avviso, Bottone, Campo, Caricamento, Input, Intestazione, Scheda, Select } from '../../components/ui'
+import { useEntrata } from '../../lib/animazioni'
 import { formatData, formatEuro, formatPercentuale } from '../../lib/format'
 import { scaricaPdfPreventivo } from '../../lib/pdfPreventivo'
 import { camerieri, REGOLE_PREDEFINITE } from '../../lib/personale'
@@ -200,6 +202,8 @@ export default function PreventivoDettaglio() {
     return { subtotale, sconto, imponibile, iva, totale: imponibile + iva, costo, margine, margine_pct: imponibile > 0 ? Math.round((margine / imponibile) * 1000) / 10 : null }
   }, [righe, testata.sconto_pct, testata.iva_pct])
 
+  const entrata = useEntrata<HTMLDivElement>(!!dati && !caricamento)
+
   if (caricamento) return <Caricamento />
   if (!dati) return <Avviso>{erroreCaricamento || 'Preventivo non trovato'}</Avviso>
   const { p } = dati
@@ -363,7 +367,7 @@ export default function PreventivoDettaglio() {
   const problemiSopralluogo = dati.sopralluogo?.checklist?.filter((c) => c.stato === 'problema') ?? []
 
   return (
-    <>
+    <div ref={entrata}>
       <Intestazione
         titolo={`Preventivo ${p.numero}`}
         sottotitolo={dati.azienda.nome}
@@ -541,7 +545,7 @@ export default function PreventivoDettaglio() {
               <span className="w-24 text-right tabular-nums">{formatEuro(t.iva)}</span>
             </dd>
           </div>
-          <div className="flex justify-between border-t border-slate-100 pt-2 text-base font-semibold"><dt>Totale</dt><dd className="tabular-nums">{formatEuro(t.totale)}</dd></div>
+          <div className="flex justify-between border-t border-slate-100 pt-2 text-base font-semibold"><dt>Totale</dt><dd><ConteggioEuro valore={t.totale} className="tabular-nums" /></dd></div>
         </dl>
         <div className="mt-3 rounded-xl bg-amber-50 p-3 text-sm ring-1 ring-amber-200">
           <p className="mb-1 text-xs font-medium tracking-wide text-amber-800 uppercase">Solo uso interno · non compare nel PDF</p>
@@ -567,6 +571,6 @@ export default function PreventivoDettaglio() {
           <Bottone className="w-full shadow-lg" caricamento={salvataggio} onClick={() => void salva()}>Salva modifiche</Bottone>
         </div>
       )}
-    </>
+    </div>
   )
 }

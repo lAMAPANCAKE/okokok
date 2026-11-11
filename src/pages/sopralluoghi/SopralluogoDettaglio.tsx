@@ -5,6 +5,7 @@ import { eseguiOAccoda, useCoda } from '../../lib/coda'
 import { caricaFile, eliminaFile, linkFirmati } from '../../lib/file'
 import { scaricaPdfZone } from '../../lib/pdfZone'
 import { TIPI_ZONA, tipoZona, type TipoZona, type ZonaSopralluogo } from '../../lib/zone'
+import { useEntrata } from '../../lib/animazioni'
 import { formatData, oggiIso } from '../../lib/format'
 import { messaggioErrore, supabase } from '../../lib/supabase'
 import { CHECKLIST_SOPRALLUOGO, type Azienda, type EsitoVoceChecklist, type Evento, type FileSopralluogo, type Sopralluogo, type VoceChecklist } from '../../lib/types'
@@ -129,6 +130,8 @@ export default function SopralluogoDettaglio() {
     setModificato(false)
     void linkFirmati('sopralluoghi', dati.file.map((f) => f.file_path)).then(setAnteprime)
   }, [dati])
+
+  const entrataZone = useEntrata<HTMLUListElement>(!!dati && !caricamento)
 
   if (caricamento) return <Caricamento />
   if (!dati) return <Avviso>{erroreCaricamento || 'Sopralluogo non trovato'}</Avviso>
@@ -400,7 +403,7 @@ export default function SopralluogoDettaglio() {
             Dividi la location in zone (bar, sala, cucina, back…): per ognuna scatti la foto com’è adesso, detti cosa va allestito e ottieni con ChatGPT la foto della zona pronta da mostrare al cliente.
           </p>
         ) : (
-          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <ul ref={entrataZone} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {dati.zone.map((z) => {
               const suoi = fotoZone.filter((f) => f.zona_id === z.id)
               const copertina = zoneConRendering.find((x) => x.id === z.id)?.scelti[0] ?? suoi.find((f) => f.tipo === 'foto')
