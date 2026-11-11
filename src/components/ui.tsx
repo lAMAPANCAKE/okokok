@@ -1,6 +1,7 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 import { Link } from 'react-router-dom'
 import type { StatoEvento, StatoTurno } from '../lib/types'
+import { Conteggio } from './Conteggio'
 
 type Variante = 'primario' | 'secondario' | 'pericolo' | 'fantasma'
 
@@ -160,7 +161,7 @@ export function Statistica({ etichetta, valore, evidenzia }: { etichetta: string
   return (
     <div className={`rounded-2xl p-4 ring-1 ${evidenzia ? 'bg-amber-50 ring-amber-200' : 'bg-white ring-slate-200'}`}>
       <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">{etichetta}</p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums">{valore}</p>
+      <p className="mt-1 text-2xl font-semibold tabular-nums">{typeof valore === 'number' ? <Conteggio valore={valore} /> : valore}</p>
     </div>
   )
 }

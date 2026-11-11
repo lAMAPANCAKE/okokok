@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { rimbalza } from '../lib/animazioni'
 import { COLORI, TRACCIATI, type Colore, type NomeIcona } from '../lib/aree'
 
 export function Icona({ nome, className = 'h-6 w-6' }: { nome: NomeIcona; className?: string }) {
@@ -36,7 +37,7 @@ export function Tessera({ to, icona, colore, etichetta, descrizione, badge, alle
       <div className="flex items-start justify-between gap-2">
         <ChipIcona icona={icona} colore={colore} />
         {badge !== undefined && badge !== null && badge !== '' && (
-          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${allerta ? 'bg-amber-700 text-white' : 'bg-slate-100 text-slate-700'}`}>{badge}</span>
+          <span key={String(badge)} ref={rimbalza} className={`rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${allerta ? 'bg-amber-700 text-white' : 'bg-slate-100 text-slate-700'}`}>{badge}</span>
         )}
       </div>
       <span className="min-w-0">
