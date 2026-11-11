@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Dettatura } from '../../components/Dettatura'
 import { AreaTesto, Avviso, Bottone, Campo, Caricamento, Input, Intestazione, Scheda, Select } from '../../components/ui'
 import { eseguiOAccoda, erroreDiRete, scartaOperazione, useCoda, type Operazione } from '../../lib/coda'
+import { apreFoglio, sfuma } from '../../lib/animazioni'
 import { linkFirmati } from '../../lib/file'
 import { comprimiImmagine } from '../../lib/immagini'
 import { messaggioErrore, supabase } from '../../lib/supabase'
@@ -416,8 +417,8 @@ function FinestraChatGpt({ foto, url, istruzioneIniziale, caricamento, onCarica,
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-slate-950/60 sm:items-center" role="dialog" aria-modal="true" aria-label="Genera con ChatGPT">
-      <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-4 sm:rounded-2xl">
+    <div ref={sfuma} className="fixed inset-0 z-40 flex items-end justify-center bg-slate-950/60 sm:items-center" role="dialog" aria-modal="true" aria-label="Genera con ChatGPT">
+      <div ref={apreFoglio} className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-4 sm:rounded-2xl">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Genera con ChatGPT</h2>
           <button className="text-slate-500" onClick={onChiudi} aria-label="Chiudi">✕</button>

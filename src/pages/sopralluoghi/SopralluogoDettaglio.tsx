@@ -5,7 +5,7 @@ import { eseguiOAccoda, useCoda } from '../../lib/coda'
 import { caricaFile, eliminaFile, linkFirmati } from '../../lib/file'
 import { scaricaPdfZone } from '../../lib/pdfZone'
 import { TIPI_ZONA, tipoZona, type TipoZona, type ZonaSopralluogo } from '../../lib/zone'
-import { useEntrata } from '../../lib/animazioni'
+import { sfuma, useEntrata } from '../../lib/animazioni'
 import { formatData, oggiIso } from '../../lib/format'
 import { messaggioErrore, supabase } from '../../lib/supabase'
 import { CHECKLIST_SOPRALLUOGO, type Azienda, type EsitoVoceChecklist, type Evento, type FileSopralluogo, type Sopralluogo, type VoceChecklist } from '../../lib/types'
@@ -470,7 +470,7 @@ export default function SopralluogoDettaglio() {
       </section>
 
       {fileAperto && (
-        <div className="fixed inset-0 z-30 flex flex-col bg-slate-950/95 p-4" role="dialog" aria-modal="true" aria-label="Anteprima file">
+        <div ref={sfuma} className="fixed inset-0 z-30 flex flex-col bg-slate-950/95 p-4" role="dialog" aria-modal="true" aria-label="Anteprima file">
           <div className="mb-3 flex justify-between gap-2">
             <Bottone variante="pericolo" className="min-h-10 text-sm" onClick={() => void rimuoviFile(fileAperto)}>Elimina</Bottone>
             <div className="flex gap-2">

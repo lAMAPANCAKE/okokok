@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth, usePermessi } from '../auth/AuthProvider'
+import { apreFoglio, chiudeFoglio, sfuma, useCambioPagina } from '../lib/animazioni'
 import { avviaCoda } from '../lib/coda'
 import { nomeCompleto } from '../lib/format'
 import { AZIONI_NUOVO, areeVisibili, type Colore, type NomeIcona } from '../lib/aree'
@@ -22,6 +23,7 @@ export function Layout() {
   useEffect(() => (isStaff ? avviaCoda() : undefined), [isStaff])
   // Cambiando pagina il foglio "Nuovo" si chiude
   useEffect(() => setNuovoAperto(false), [location.pathname])
+  const pagina = useCambioPagina<HTMLElement>(location.pathname)
 
   const gruppi = areeVisibili({ isStaff, isAdmin })
 
@@ -94,7 +96,7 @@ export function Layout() {
           <Campanella />
         </header>
 
-        <main className="mx-auto w-full max-w-3xl px-4 pt-5 pb-28 md:pb-10">
+        <main ref={pagina} className="mx-auto w-full max-w-3xl px-4 pt-5 pb-28 md:pb-10">
           <Outlet />
         </main>
       </div>
@@ -156,14 +158,23 @@ function VoceLaterale({ to, etichetta, icona, colore }: VoceBarra & { colore: Co
 
 /** Foglio "Nuovo": dal basso sul telefono, al centro su schermi larghi */
 function FoglioNuovo({ onChiudi }: { onChiudi: () => void }) {
+  const sfondo = useRef<HTMLDivElement>(null)
+  const foglio = useRef<HTMLDivElement>(null)
+  // Chiusura animata: il foglio scende (o si ritira), poi viene tolto
+  const chiudi = () => chiudeFoglio(foglio.current, sfondo.current, onChiudi)
   useEffect(() => {
-    const esc = (e: KeyboardEvent) => e.key === 'Escape' && onChiudi()
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && chiudeFoglio(foglio.current, sfondo.current, onChiudi)
     window.addEventListener('keydown', esc)
     return () => window.removeEventListener('keydown', esc)
   }, [onChiudi])
+  useEffect(() => {
+    sfuma(sfondo.current)
+    apreFoglio(foglio.current)
+  }, [])
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-slate-900/40 backdrop-blur-sm md:items-center print:hidden" onClick={onChiudi}>
+    <div ref={sfondo} className="fixed inset-0 z-40 flex items-end justify-center bg-slate-900/40 backdrop-blur-sm md:items-center print:hidden" onClick={chiudi}>
       <div
+        ref={foglio}
         role="dialog"
         aria-modal="true"
         aria-label="Crea nuovo"
@@ -173,7 +184,7 @@ function FoglioNuovo({ onChiudi }: { onChiudi: () => void }) {
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-200 md:hidden" />
         <div className="mb-2 flex items-center justify-between px-1">
           <p className="font-semibold">Crea nuovo</p>
-          <button type="button" onClick={onChiudi} className="rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100" aria-label="Chiudi">✕</button>
+          <button type="button" onClick={chiudi} className="rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100" aria-label="Chiudi">✕</button>
         </div>
         <ul className="grid grid-cols-2 gap-2">
           {AZIONI_NUOVO.map((a) => (
