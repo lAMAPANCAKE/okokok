@@ -5,7 +5,7 @@ import {
   CATALOGO, PAVIMENTI, allestimentoIniziale, lunghezzaSegmento, normalizzaAllestimento, postiOggetto, postoLibero, riepilogo, sedieMaxImperiale,
   segmentiPareti, stanzaRettangolare, voceCatalogo, type Allestimento, type CategoriaArredo, type Oggetto, type Punto,
 } from '../../lib/allestimento'
-import { compare, ingrandisce } from '../../lib/animazioni'
+import { compare, ingrandisce, sfuma } from '../../lib/animazioni'
 import { caricaFile, linkFirmati } from '../../lib/file'
 import { formatData } from '../../lib/format'
 import { MODELLI, type Modello } from '../../lib/modelli'
@@ -535,7 +535,7 @@ function FinestraRendering({ galleria: g, titolo, onCambia, onAvvia, onPdf, onSa
   const scelti = g.scelti.filter(Boolean).length
   const aperta = g.aperta !== null ? g.foto[g.aperta] : null
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-slate-950 text-white" role="dialog" aria-modal="true" aria-label="Rendering finale">
+    <div ref={sfuma} className="fixed inset-0 z-50 flex flex-col bg-slate-950 text-white" role="dialog" aria-modal="true" aria-label="Rendering finale">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 p-3">
         <div className="min-w-0">
           <p className="truncate font-semibold">Rendering finale · {titolo}</p>

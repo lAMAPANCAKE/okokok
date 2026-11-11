@@ -33,6 +33,42 @@ export function sale(el: HTMLElement | null) {
   gsap.from(el, { opacity: 0, y: 14, duration: 0.4, ease: 'power2.out', clearProps: 'opacity,transform' })
 }
 
+/** Da usare come `ref` su finestre a tutto schermo e sfondi scuri: semplice dissolvenza. */
+export function sfuma(el: HTMLElement | null) {
+  if (!el || menoMovimento()) return
+  gsap.from(el, { opacity: 0, duration: 0.2, ease: 'power1.out', clearProps: 'opacity' })
+}
+
+/** Da usare come `ref` su un foglio: sale dal basso sul telefono, cresce dal centro su schermi larghi. */
+export function apreFoglio(el: HTMLElement | null) {
+  if (!el || menoMovimento()) return
+  if (window.matchMedia('(min-width: 768px)').matches) gsap.from(el, { opacity: 0, scale: 0.95, duration: 0.22, ease: 'power2.out', clearProps: 'opacity,transform' })
+  else gsap.from(el, { yPercent: 100, duration: 0.3, ease: 'power3.out', clearProps: 'transform' })
+}
+
+/** Chiude un foglio aperto con `apreFoglio` (e sfuma lo sfondo), poi chiama `fatto`. */
+export function chiudeFoglio(foglio: HTMLElement | null, sfondo: HTMLElement | null, fatto: () => void) {
+  if (!foglio || menoMovimento()) return fatto()
+  const largo = window.matchMedia('(min-width: 768px)').matches
+  gsap.to(foglio, { ...(largo ? { opacity: 0, scale: 0.95 } : { yPercent: 100 }), duration: 0.2, ease: 'power2.in', onComplete: fatto })
+  if (sfondo) gsap.to(sfondo, { backgroundColor: 'rgba(0,0,0,0)', duration: 0.2 })
+}
+
+/**
+ * Cambio di schermata: a ogni nuova `chiave` (il percorso) il contenuto entra con una dissolvenza
+ * e un piccolo scorrimento. Non alla prima apertura: lì ogni pagina ha già la sua entrata.
+ */
+export function useCambioPagina<T extends HTMLElement>(chiave: string) {
+  const ref = useRef<T>(null)
+  const prima = useRef(chiave)
+  useGSAP(() => {
+    if (prima.current === chiave || !ref.current || menoMovimento()) return
+    prima.current = chiave
+    gsap.fromTo(ref.current, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.22, ease: 'power2.out', clearProps: 'opacity,transform' })
+  }, { dependencies: [chiave] })
+  return ref
+}
+
 /** Da usare come `ref` su un numero in evidenza: piccolo rimbalzo quando compare o cambia. */
 export function rimbalza(el: HTMLElement | null) {
   if (!el || menoMovimento()) return

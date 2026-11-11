@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Avviso, Caricamento, Intestazione, Select } from '../components/ui'
 import { caricaDisponibilita, statoDi, type StatoGiorno } from '../lib/disponibilita'
+import { sale } from '../lib/animazioni'
 import { dataLocale, isoGiorno, nomeCompleto, oggiIso } from '../lib/format'
 import { useDati } from '../lib/useDati'
 
@@ -123,7 +124,7 @@ export default function DisponibilitaPersonale() {
       )}
 
       {dettaglio && (
-        <div className="fixed inset-x-3 bottom-24 z-30 mx-auto max-w-md rounded-2xl bg-white p-4 shadow-lg ring-1 ring-slate-200 md:bottom-6" role="dialog" aria-label="Dettaglio disponibilità">
+        <div ref={sale} className="fixed inset-x-3 bottom-24 z-30 mx-auto max-w-md rounded-2xl bg-white p-4 shadow-lg ring-1 ring-slate-200 md:bottom-6" role="dialog" aria-label="Dettaglio disponibilità">
           <div className="flex items-start justify-between gap-2">
             <div>
               <p className="font-semibold">{dettaglio.nome}</p>
