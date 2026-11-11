@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 import { useAuth, usePermessi } from '../auth/AuthProvider'
 import { Tessera } from '../components/aree'
+import { Conteggio, ConteggioEuro } from '../components/Conteggio'
+import { sale, useEntrata } from '../lib/animazioni'
 import { AREE } from '../lib/aree'
 import { Avviso, Caricamento, SchedaLink, Statistica, Vuoto } from '../components/ui'
 import { formatData, formatEuro, formatOre, intervalloOre, isoGiorno, oggiIso } from '../lib/format'
@@ -9,6 +11,8 @@ import { ETICHETTA_PIPELINE, type Copertura, type Evento, type Profilo, type Sta
 import { oppureErrore, useDati } from '../lib/useDati'
 import { IndicatoreCopertura } from './eventi/Eventi'
 import { SchedaTurno, type TurnoConEvento } from './MieiTurni'
+
+const SOTTO_I_RIQUADRI = ':scope > :not([aria-label="Accesso rapido"])'
 
 function saluto() {
   const h = new Date().getHours()
@@ -32,9 +36,10 @@ export default function Dashboard() {
 /** Riquadri per entrare nelle aree principali, con un numero quando c'è qualcosa da guardare */
 function AccessoRapido({ chiavi, badge = {} }: { chiavi: string[]; badge?: Record<string, { valore: number; allerta?: boolean }> }) {
   const { isStaff, isAdmin } = usePermessi()
+  const entrata = useEntrata<HTMLElement>()
   const aree = chiavi.map((k) => AREE.find((a) => a.chiave === k)).filter((a) => a && a.visibile({ isStaff, isAdmin }))
   return (
-    <section aria-label="Accesso rapido" className="grid grid-cols-3 gap-2.5">
+    <section ref={entrata} aria-label="Accesso rapido" className="grid grid-cols-3 gap-2.5">
       {aree.map((a) => a && (
         <Tessera key={a.chiave} to={a.to} icona={a.icona} colore={a.colore} etichetta={a.etichetta}
           badge={badge[a.chiave]?.valore || undefined} allerta={badge[a.chiave]?.allerta} />
@@ -67,6 +72,9 @@ function DashboardCollaboratore() {
     }
   }, [profilo?.id, oggi])
 
+  // Sotto i riquadri (che entrano per conto loro) il resto della pagina sale in sequenza
+  const entrata = useEntrata<HTMLDivElement>(!caricamento && !!dati, SOTTO_I_RIQUADRI)
+
   if (caricamento) return <Caricamento />
   if (errore || !dati) return <Avviso>{errore}</Avviso>
 
@@ -74,7 +82,7 @@ function DashboardCollaboratore() {
   const prossimo = dati.prossimi.find((t) => t.stato === 'confermato')
 
   return (
-    <div className="space-y-6">
+    <div ref={entrata} className="space-y-6">
       <AccessoRapido
         chiavi={['turni', 'disponibilita', 'compensi', 'documenti', 'rimborsi', 'profilo']}
         badge={{ turni: { valore: daConfermare.length, allerta: true }, documenti: { valore: dati.documentiDaSistemare, allerta: true } }}
@@ -113,7 +121,7 @@ function DashboardCollaboratore() {
         </div>
         <Link to="/compensi" className="mt-3 flex items-center justify-between rounded-2xl bg-white p-4 ring-1 ring-slate-200">
           <span className="text-sm text-slate-600">Saldo da ricevere</span>
-          <span className="text-lg font-semibold tabular-nums">{formatEuro(dati.saldo)}</span>
+          <ConteggioEuro valore={dati.saldo} daZero className="text-lg font-semibold tabular-nums" />
         </Link>
       </section>
     </div>
@@ -167,7 +175,7 @@ function DaFare({ isAdmin }: { isAdmin: boolean }) {
   // Solo quello che chiede davvero un'azione: le righe a zero non servono
   const attive = voci.filter((v) => v.attivo)
   return (
-    <section>
+    <section ref={sale}>
       <h2 className="mb-2 font-semibold">Da fare</h2>
       {attive.length === 0 ? (
         <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800 ring-1 ring-emerald-200">Tutto in ordine: niente da approvare, pagare o verificare.</p>
@@ -212,7 +220,7 @@ function Commerciale() {
 
   if (!dati) return null
   return (
-    <section>
+    <section ref={sale}>
       <div className="mb-2 flex items-center justify-between">
         <h2 className="font-semibold">Commerciale</h2>
         <Link to="/crm" className="inline-flex min-h-11 items-center text-sm font-medium text-brand-700">Clienti →</Link>
@@ -220,12 +228,12 @@ function Commerciale() {
       <div className="grid grid-cols-2 gap-3">
         <Link to="/preventivi" className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
           <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">Preventivi aperti</p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums">{dati.aperti}</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums"><Conteggio valore={dati.aperti} /></p>
           <p className="text-xs text-slate-500">{formatEuro(dati.valore)} + IVA</p>
         </Link>
         <Link to="/crm" className={`rounded-2xl p-4 ring-1 ${dati.followupDovuti > 0 ? 'bg-amber-50 ring-amber-200' : 'bg-white ring-slate-200'}`}>
           <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">Follow-up</p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums">{dati.followupDovuti}</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums"><Conteggio valore={dati.followupDovuti} /></p>
           <p className="text-xs text-slate-500">da fare oggi · {dati.followupSettimana} in settimana</p>
         </Link>
       </div>
@@ -264,6 +272,9 @@ function DashboardStaff() {
     }
   }, [oggi, fraSetteGiorni])
 
+  // Sotto i riquadri (che entrano per conto loro) il resto della pagina sale in sequenza
+  const entrata = useEntrata<HTMLDivElement>(!caricamento && !!dati, SOTTO_I_RIQUADRI)
+
   if (caricamento) return <Caricamento />
   if (errore || !dati) return <Avviso>{errore}</Avviso>
 
@@ -273,7 +284,7 @@ function DashboardStaff() {
   const ordinati = [...dati.eventi].sort((a, b) => Number((dati.copertura.get(b.id)?.mancanti ?? 0) > 0) - Number((dati.copertura.get(a.id)?.mancanti ?? 0) > 0) || a.data.localeCompare(b.data))
 
   return (
-    <div className="space-y-6">
+    <div ref={entrata} className="space-y-6">
       <AccessoRapido
         chiavi={['eventi', 'personale', 'sopralluoghi', 'preventivi', 'clienti', 'report', 'compensi', 'rimborsi', 'fatture']}
         badge={{ eventi: { valore: dati.eventi.length }, personale: { valore: scoperti, allerta: true } }}
